@@ -20,3 +20,6 @@ minions
 
 [etcd:children]
 masters
+
+[my-cluster:children]
+nodes
