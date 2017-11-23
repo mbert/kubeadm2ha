@@ -1,0 +1,29 @@
+user  nginx;
+worker_processes auto;
+
+error_log  /var/log/nginx/error.log info;
+pid        /var/run/nginx.pid;
+
+load_module /usr/lib64/nginx/modules/ngx_stream_module.so;
+
+events {
+    worker_connections  1024;
+}
+
+stream {
+
+    upstream apiserver {
+{% for host in groups['masters'] %}
+        server {{ hostvars[host]['ansible_default_ipv4']['address'] }}:6443 weight=5 max_fails=3 fail_timeout=30s;
+{% endfor %}
+    }
+
+    server {
+        listen 8443;
+        proxy_timeout 1s;
+        proxy_connect_timeout 1s;
+        proxy_pass apiserver;
+    }
+
+}
+

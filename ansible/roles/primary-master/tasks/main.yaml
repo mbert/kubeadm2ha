@@ -1,0 +1,42 @@
+#
+# Initialise primary master
+#
+---
+
+- name: Generate 'kubeadm' configuration file
+  template: src=kubeadm-init.yaml.j2 dest=/root/kubeadm-init.yaml
+
+- name: Run 'kubeadm'
+  command: kubeadm init --config=/root/kubeadm-init.yaml
+
+# I like weavenet because it does not bring in additional requirements to the cluster's configuration.
+# People who want to use different plugins like e.g. flannel can add more conditional includes here.
+- include: weavenet.yaml
+  when: NETWORK_PLUGIN == 'weavenet'
+
+- name: Copy network plugin yaml
+  copy: src=/tmp/net.yaml dest=/root/net.yaml
+
+- name: Apply network plugin yaml
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/net.yaml
+
+- name: Remove 'NodeRestriction' from apiserver
+  command: "perl -pi -e 's/.*--admission-control=.*/    - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds/' /etc/kubernetes/manifests/kube-apiserver.yaml"
+
+- name: Restart docker
+  systemd: name=docker state=restarted
+
+- name: Restart kubelet
+  systemd: name=kubelet state=restarted
+
+- name: Wait for apiserver to be restarted
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; it=0; while ! kubectl get nodes; do test $it -gt 30 && exit 1; echo "Waiting for apiserver to be restarted..."; sleep 2s; it=`expr $it + 1`; done
+
+- name: Wait for master node to be ready
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; it=0; while kubectl get nodes | grep -q "NotReady"; do test $it -gt 30 && exit 1; echo "Waiting for primary node to be ready..."; sleep 2s; it=`expr $it + 1`; done
+
+- name: Create archive from /etc/kubernetes
+  archive: path=/etc/kubernetes dest=/tmp/kubernetes-conf.tar.gz
+
+- name: Fetch archive /tmp/kubernetes-conf.tar.gz
+  fetch: src=/tmp/kubernetes-conf.tar.gz dest=/tmp/ flat=yes

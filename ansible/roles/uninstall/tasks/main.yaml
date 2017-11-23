@@ -1,0 +1,30 @@
+#
+# Clean up all hosts, so that a new K8s cluster installation can be performed:
+# - kubeadm reset is called on all hosts
+# - etcd is disabled and stopped
+# - the etcd data dir /var/lib/etcd/default.etcd is deleted
+# - kubelet is disabled and stopped
+#
+--- 
+
+- name: Stop and disable nginx load balancer
+  service: name=nginx enabled=false state=stopped
+  when: "'masters' in group_names"
+
+- name: Stop and disable keepalived cluster
+  service: name=keepalived enabled=false state=stopped
+  when: "'masters' in group_names"
+
+- name: Run 'kubeadm reset'
+  command: kubeadm reset
+
+- name: Disable and stop etcd
+  service: name=etcd enabled=false state=stopped
+  when: "'masters' in group_names"
+
+- name: Disable and stop kubelet
+  service: name=kubelet enabled=false state=stopped
+
+- name: Clean up /var/lib/etcd.default.etcd on all masters
+  file: path=/var/lib/etcd/default.etcd state=absent
+  when: "'masters' in group_names"

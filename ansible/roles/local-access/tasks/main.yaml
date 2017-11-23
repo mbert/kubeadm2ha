@@ -1,0 +1,10 @@
+#
+# Create an admin.conf file for load-balanced remote access.
+#
+---
+
+- name: Create admin.conf file for access via VIP
+  shell: "perl -p -e 's|server: *https://.*:6443|server: https://{{ MASTER_VIP }}:8443|g' /etc/kubernetes/admin.conf >/tmp/admin.conf"
+
+- name: Fetch patched admin.conf
+  fetch: src=/tmp/admin.conf dest=/tmp/{{ CLUSTER_NAME }}-admin.conf flat=yes

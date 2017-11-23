@@ -1,0 +1,13 @@
+#!/bin/sh
+
+cd /etc/kubernetes
+
+{% for host in groups['primary-master'] %}
+PRIMARY_MASTER_FQDN="`echo "{{ hostvars[host]['ansible_fqdn'] }}" | sed 's/\./\\./g'`"
+{% endfor %}
+
+{% for host in groups['primary-master'] %}
+PRIMARY_MASTER_IP="`echo "{{ hostvars[host]['ansible_default_ipv4']['address'] }}" | sed 's/\./\\./g'`"
+{% endfor %}
+
+perl -pi -e "s/${PRIMARY_MASTER_FQDN}/{{ ansible_fqdn }}/g; s/(server: *https:\/\/|--advertise-address=)${PRIMARY_MASTER_IP}/\${1}{{ ansible_default_ipv4.address }}/g"  *.* manifests/*.*

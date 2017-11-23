@@ -1,0 +1,15 @@
+#
+# Playbook to connect a cluster to the local machine (for remote kubectl access)
+#
+--- 
+
+- name: Get settings file
+  hosts: primary-master
+  remote_user: root
+  gather_facts: no
+  any_errors_fatal: yes
+  roles:
+  - local-access
+  tags:
+  - local-access
+

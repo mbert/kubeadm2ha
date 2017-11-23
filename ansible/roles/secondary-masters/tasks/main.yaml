@@ -1,0 +1,22 @@
+#
+# Initialise secondary masters
+#
+---
+
+- name: Make sure that kubelet is not up
+  service: name=kubelet state=stopped
+
+- name: Copy /tmp/kubernetes-conf.tar.gz
+  copy: src=/tmp/kubernetes-conf.tar.gz dest=/tmp/kubernetes-conf.tar.gz
+
+- name: Extract /tmp/kubernetes-conf.tar.gz
+  unarchive: src=/tmp/kubernetes-conf.tar.gz dest=/etc/
+
+- name: Generate script for adapting the copied files in /etc/kubernetes for the respective master host
+  template: src=adapt-etc-kubernetes.sh.j2 dest=/tmp/adapt-etc-kubernetes.sh
+
+- name: Adapt IP addresses in /etc/kubernetes to respective master host
+  command: sh /tmp/adapt-etc-kubernetes.sh
+
+- name: Start kubelet on secondary master
+  service: name=kubelet state=started enabled=yes

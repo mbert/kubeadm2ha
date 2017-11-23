@@ -1,0 +1,19 @@
+#
+# Global variables for all nodes
+#
+--- 
+
+# Base settings
+CLUSTER_NAME: md-kubernetes
+MASTER_VIP: 192.168.0.50
+NETWORK_PLUGIN: weavenet
+POD_NETWORK_CIDR: 10.120.0.0/16
+
+# Software versions (used by installation via yum)
+KUBERNETES_VERSION: 1.8.3
+KUBERNETES_CNI_VERSION: 0.5.1
+ETCD_VERSION: 3.2.7
+KEEPALIVED_VERSION: 1.3.5
+NGINX_VERSION: 1.12.2
+
+

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+KUBECONFIG=/etc/kubernetes/admin.conf
+export KUBECONFIG
+
+{% for host in groups['masters'] %}
+kubectl patch node {{ hostvars[host]['ansible_fqdn'] }} -p '{"spec":{"unschedulable":false}}' || exit 1
+{% endfor %}

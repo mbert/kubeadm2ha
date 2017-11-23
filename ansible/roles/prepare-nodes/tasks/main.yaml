@@ -1,0 +1,28 @@
+#
+# Prepare node (i.e. set up and fix some files)
+#
+---
+
+- name: Install perl via package manager
+  yum: name=perl state=present
+
+- name: Install kubelet via package manager
+  yum: name=kubelet-{{ KUBERNETES_VERSION }} state=present
+
+- name: Install kubectl via package manager
+  yum: name=kubectl-{{ KUBERNETES_VERSION }} state=present
+
+- name: Install kubeadm via package manager
+  yum: name=kubeadm-{{ KUBERNETES_VERSION }} state=present
+
+- name: Install kubernetes-cni via package manager
+  yum: name=kubernetes-cni-{{ KUBERNETES_CNI_VERSION }} state=present
+
+- name: Set cgroups driver to 'cgroupfs' 
+  command: perl -pi -e "s/--cgroup-driver=inetd/--cgroup-driver=cgroupfs/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+
+- name: Reload systemd units
+  # Fixme: 2.3.1.0 wants a 'name' argument here which is of course nonsense
+  #systemd: daemon-reload=yes
+  command: systemctl daemon-reload
+

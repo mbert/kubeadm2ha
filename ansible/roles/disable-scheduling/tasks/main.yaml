@@ -1,0 +1,10 @@
+#
+# Disable scheduling pods.
+#
+---
+- name: Create script for disabling scheduling for all master nodes
+  template: src=unschedule.sh.j2 dest=/tmp/unschedule.sh mode=0755 owner=root group=root
+
+- name: Run script for disabling scheduling for all master nodes
+  command: /tmp/unschedule.sh
+

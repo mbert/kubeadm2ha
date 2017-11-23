@@ -1,0 +1,20 @@
+apiVersion: kubeadm.k8s.io/v1alpha1
+kind: MasterConfiguration
+kubernetesVersion: v{{ KUBERNETES_VERSION }}
+networking:
+  podSubnet: {{ POD_NETWORK_CIDR }}
+apiServerCertSANs:
+{% for host in groups['masters'] %}
+- {{ hostvars[host]['ansible_fqdn'] }}
+{% endfor %}
+{% for host in groups['masters'] %}
+- {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+{% endfor %}
+- {{ MASTER_VIP }}
+etcd:
+  endpoints:
+{% for host in groups['masters'] %}
+  - http://{{ hostvars[host]['ansible_default_ipv4']['address'] }}:2379
+{% endfor %}
+
+

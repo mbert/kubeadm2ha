@@ -1,0 +1,10 @@
+#
+# Disable scheduling pods.
+#
+---
+- name: Create script for enabling scheduling for all master nodes
+  template: src=schedule.sh.j2 dest=/tmp/schedule.sh mode=0755 owner=root group=root
+
+- name: Run script for enabling scheduling for all master nodes
+  command: /tmp/schedule.sh
+
