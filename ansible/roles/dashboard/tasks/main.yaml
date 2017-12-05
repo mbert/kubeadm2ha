@@ -1,0 +1,58 @@
+#
+# Sets up the dashboard
+#
+---
+
+- name: Get the dashboard yaml
+  local_action: shell wget -O /tmp/kubernetes-dashboard.yaml https://raw.githubusercontent.com/dashboard/master/src/deploy/alternative/kubernetes-dashboard.yaml
+  args:
+    warn: no
+
+- name: Edit the dashboard yaml
+  local_action: "shell echo '  type: NodePort' >>/tmp/kubernetes-dashboard.yaml"
+
+- name: clone heapster git to /tmp
+  local_action: "shell cd /tmp; if [ -d heapster ]; then cd heapster; git reset --hard HEAD; git pull; else git clone https://github.com/heapster.git; fi"
+
+- name: Edit grafana yaml
+  local_action: "shell perl -pi -e 's/# *type: *NodePort/type: NodePort/' /tmp/heapster/deploy/kube-config/influxdb/grafana.yaml"
+
+- name: Create setup directory 
+  file: path=/root/setup/dashboard state=directory
+
+- name: Copy dashboard yaml
+  copy: src=/tmp/kubernetes-dashboard.yaml dest=/root/setup/dashboard/kubernetes-dashboard.yaml owner=root group=root mode=0644
+
+- name: Copy dashboard-admin yaml
+  copy: src=dashboard-admin.yaml dest=/root/setup/dashboard/dashboard-admin.yaml owner=root group=root mode=0644
+
+- name: Copy dashboard-admin yaml
+  copy: src=dashboard-admin.yaml dest=/root/setup/dashboard/dashboard-admin.yaml owner=root group=root mode=0644
+
+- name: Copy heapster
+  synchronize: src=/tmp/heapster dest=/root/setup/dashboard/
+
+- name: Install dashboard
+  shell: export KUBECONFIG=/etc/admin.conf; kubectl apply -f /root/setup/dashboard/kubernetes-dashboard.yaml
+
+- name: Install dashboard-admin
+  shell: export KUBECONFIG=/etc/admin.conf; kubectl apply -f /root/setup/dashboard/dashboard-admin.yaml
+
+- name: Install influxdb
+  shell: export KUBECONFIG=/etc/admin.conf; kubectl apply -f /root/setup/dashboard/heapster/deploy/kube-config/influxdb/
+
+- name: Install heapster
+  shell: export KUBECONFIG=/etc/admin.conf; kubectl apply -f /root/setup/dashboard/heapster/deploy/kube-config/rbac/heapster-rbac.yaml
+
+- name: Set kubernetes dashboard replicas.
+  shell: export KUBECONFIG=/etc/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/kubernetes-dashboard
+
+- name: Set heapster replicas.
+  shell: export KUBECONFIG=/etc/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/heapster
+
+- name: Set grafana replicas.
+  shell: export KUBECONFIG=/etc/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/monitoring-grafana
+
+- name: Set influxdb replicas.
+  shell: export KUBECONFIG=/etc/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/monitoring-influxdb
+

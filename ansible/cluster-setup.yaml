@@ -24,7 +24,6 @@
   tags:
   - ha
 
-# TODO: set up scale dashboard, heapster, grafana, influxdb automatically.
 - name: Set up masters
   hosts: masters
   remote_user: root
@@ -32,9 +31,9 @@
   any_errors_fatal: yes
   roles:
   - prepare-nodes
-  - {role: primary-master,    when: "'primary-master' in group_names"    }
-  - {role: secondary-masters, when: "'secondary-masters' in group_names" }
-  - {role: ha-settings,       when: "'primary-master' in group_names"    }
+  - {role: primary-master,     when: "'primary-master'    in group_names" }
+  - {role: secondary-masters,  when: "'secondary-masters' in group_names" }
+  - {role: ha-settings,        when: "'primary-master'    in group_names" }
   tags:
   - masters
 
@@ -44,11 +43,11 @@
   gather_facts: yes
   any_errors_fatal: yes
   roles:
-  - {role: prepare-nodes,      when: "'minions' in group_names"         }
-  - {role: disable-scheduling, when: "'primary-master' in group_names"  }
-  - {role: join-token,         when: "'primary-master' in group_names"  }
-  - {role: minions,            when: "'minions' in group_names"         }
-  - {role: enable-scheduling,  when: "'primary-master' in group_names"  }
+  - {role: prepare-nodes,      when: "'minions'           in group_names" }
+  - {role: disable-scheduling, when: "'primary-master'    in group_names" }
+  - {role: join-token,         when: "'primary-master'    in group_names" }
+  - {role: minions,            when: "'minions'           in group_names" }
+  - {role: enable-scheduling,  when: "'primary-master'    in group_names" }
   tags:
   - minions
 

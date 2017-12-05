@@ -6,8 +6,6 @@
 - name: Set kube-dns replicas.
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/kube-dns
 
-# TODO: scale dashboard, heapster, grafana, influxdb once they're part of the setup.
-
 - name: Get current kube-proxy settings
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl get -n kube-system configmap/kube-proxy -o yaml >/tmp/kube-proxy.yaml
 

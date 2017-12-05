@@ -9,10 +9,11 @@
 - name: Run 'kubeadm'
   command: kubeadm init --config=/root/kubeadm-init.yaml
 
-# I like weavenet because it does not bring in additional requirements to the cluster's configuration.
-# People who want to use different plugins like e.g. flannel can add more conditional includes here.
 - include: weavenet.yaml
   when: NETWORK_PLUGIN == 'weavenet'
+
+- include: flannel.yaml
+  when: NETWORK_PLUGIN == 'flannel'
 
 - name: Copy network plugin yaml
   copy: src=/tmp/net.yaml dest=/root/net.yaml
@@ -24,10 +25,10 @@
   command: "perl -pi -e 's/.*--admission-control=.*/    - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds/' /etc/kubernetes/manifests/kube-apiserver.yaml"
 
 - name: Restart docker
-  systemd: name=docker state=restarted
+  systemd: name=docker state=restarted enabled=yes
 
 - name: Restart kubelet
-  systemd: name=kubelet state=restarted
+  systemd: name=kubelet state=restarted enabled=yes
 
 - name: Wait for apiserver to be restarted
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; it=0; while ! kubectl get nodes; do test $it -gt 30 && exit 1; echo "Waiting for apiserver to be restarted..."; sleep 2s; it=`expr $it + 1`; done

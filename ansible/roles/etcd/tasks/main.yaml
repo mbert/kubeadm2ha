@@ -3,15 +3,10 @@
 #
 ---
 - name: Install etcd via package manager
-  yum: name=etcd-{{ ETCD_VERSION }} state=present
+  package: name=etcd-{{ ETCD_VERSION }} state=present
 
 - name: Write etcd config file
-  template:
-    src: etcd.conf.j2
-    dest: /etc/etcd/etcd.conf
-    group: etcd
-    owner: etcd
-    mode: 0644
+  template: src=etcd.conf.j2 dest=/etc/etcd/etcd.conf group=etcd owner=etcd mode=0644
 
 - name: Make sure database directory /var/lib/etcd exists and has the right permissions
   file: path=/var/lib/etcd state=directory owner=etcd group=etcd mode=0755

@@ -4,19 +4,19 @@
 ---
 
 - name: Install perl via package manager
-  yum: name=perl state=present
+  package: name=perl state=present
 
 - name: Install kubelet via package manager
-  yum: name=kubelet-{{ KUBERNETES_VERSION }} state=present
+  package: name=kubelet-{{ KUBERNETES_VERSION }} state=present
 
 - name: Install kubectl via package manager
-  yum: name=kubectl-{{ KUBERNETES_VERSION }} state=present
+  package: name=kubectl-{{ KUBERNETES_VERSION }} state=present
 
 - name: Install kubeadm via package manager
-  yum: name=kubeadm-{{ KUBERNETES_VERSION }} state=present
+  package: name=kubeadm-{{ KUBERNETES_VERSION }} state=present
 
 - name: Install kubernetes-cni via package manager
-  yum: name=kubernetes-cni-{{ KUBERNETES_CNI_VERSION }} state=present
+  package: name=kubernetes-cni-{{ KUBERNETES_CNI_VERSION }} state=present
 
 - name: Set cgroups driver to 'cgroupfs' 
   command: perl -pi -e "s/--cgroup-driver=inetd/--cgroup-driver=cgroupfs/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf

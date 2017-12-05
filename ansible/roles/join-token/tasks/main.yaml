@@ -2,8 +2,16 @@
 # Get a new join token from the primary master in order to add worker nodes.
 #
 ---
+- name: Generate a join token
+  command: "kubeadm token create"
+  register: TOKEN
+
+- name: Generate a hash
+  shell: "openssl x509 -pubkey -in /etc/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'"
+  register: HASH
+
 - name: Generate a command line with join token for adding worker nodes
-  shell: echo "kubeadm join --token `kubeadm token create` {{ ansible_default_ipv4.address }}:6443 --discovery-token-ca-cert-hash sha256:`openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed "s/^.* //"`" >/tmp/join-worker-node.sh
+  template: src=join-worker-node.sh.j2 dest=/tmp/join-worker-node.sh owner=root group=root mode=0755
 
 - name: Fetch script with generated command line for adding worker nodes
   fetch: src=/tmp/join-worker-node.sh dest=/tmp/ flat=yes

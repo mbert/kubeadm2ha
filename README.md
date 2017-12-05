@@ -9,7 +9,8 @@ This code largely follows the instructions published in [cookeem/kubeadm-ha](htt
 This repository contains a set of ansible scripts to do this. There are three playbooks:
 1. _cluster-setup.yaml_ sets up a complete cluster including the HA setup. See below for more details.
 2. _cluster-uninstall.yaml_ removes data and configuration files to a point that _cluster-setup.yaml_ can be used again.
-3. _local-access.yaml_ fetches a patched _admin.conf_ file to _/tmp/<my-cluster-name>-admin.conf_. After copying it to _~/.kube/config_ remote _kubectl_ access via V-IP / load balancer can be tested. 
+3. _cluster-dashboard.yaml_ sets up the dashboard including influxdb/grafana. This setup is tailored for an on-premises installation (i.e. NodePort is used rather than load balancers).
+4. _local-access.yaml_ fetches a patched _admin.conf_ file to _/tmp/<my-cluster-name>-admin.conf_. After copying it to _~/.kube/config_ remote _kubectl_ access via V-IP / load balancer can be tested. 
 
 ## Configuration
 
@@ -29,9 +30,5 @@ In order to use the ansible scripts, at least two files need to be configured:
 
 ## Known limitations
 This is a preview in order to obtain early feedback. It is far from done. In particular:
-- HA capabilities have not yet been tested. The setup works insofar as remote access over load balancer / V-IP works.
-- Only _weavenet_ network plugin is supported (extending for others, like _flannel_, should be fairly easy though).
-- Only _rpm/yum_ is supported (workaround: install software by hand and comment out the _yum_ module calls).
-- Setup of _dashboard_, _heapster_, _grafana_, _influxdb_ is not yet integrated, will come later.
 - Error checking is vastly missing (e.g. whether the additional masters successfully joined).
 - Those I can't remember now ;)
