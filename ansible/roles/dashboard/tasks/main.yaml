@@ -10,12 +10,14 @@
 
 - name: Edit the dashboard yaml
   local_action: "shell echo '  type: NodePort' >>/tmp/kubernetes-dashboard.yaml"
+  when: "HAS_LB == 'no'"
 
 - name: clone heapster git to /tmp
   local_action: "shell cd /tmp; if [ -d heapster ]; then cd heapster; git reset --hard HEAD; git pull; else git clone https://github.com/heapster.git; fi"
 
 - name: Edit grafana yaml
   local_action: "shell perl -pi -e 's/# *type: *NodePort/type: NodePort/' /tmp/heapster/deploy/kube-config/influxdb/grafana.yaml"
+  when: "HAS_LB == 'no'"
 
 - name: Create setup directory 
   file: path=/root/setup/dashboard state=directory

@@ -6,6 +6,7 @@
 # Base settings
 CLUSTER_NAME: md-kubernetes
 MASTER_VIP: 192.168.0.50
+HAS_LB: no
 
 # Network settings
 # Choices are: flannel, weavenet

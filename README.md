@@ -9,7 +9,7 @@ This code largely follows the instructions published in [cookeem/kubeadm-ha](htt
 This repository contains a set of ansible scripts to do this. There are three playbooks:
 1. _cluster-setup.yaml_ sets up a complete cluster including the HA setup. See below for more details.
 2. _cluster-uninstall.yaml_ removes data and configuration files to a point that _cluster-setup.yaml_ can be used again.
-3. _cluster-dashboard.yaml_ sets up the dashboard including influxdb/grafana. This setup is tailored for an on-premises installation (i.e. NodePort is used rather than load balancers).
+3. _cluster-dashboard.yaml_ sets up the dashboard including influxdb/grafana. This setup is insecure (no SSL).
 4. _local-access.yaml_ fetches a patched _admin.conf_ file to _/tmp/<my-cluster-name>-admin.conf_. After copying it to _~/.kube/config_ remote _kubectl_ access via V-IP / load balancer can be tested. 
 
 ## Configuration
