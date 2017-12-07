@@ -28,3 +28,9 @@
 - name: Clean up /var/lib/etcd.default.etcd on all masters
   file: path=/var/lib/etcd/default.etcd state=absent
   when: "'masters' in group_names"
+
+- name: Reboot machine
+  command: /sbin/shutdown -r +1
+  async: 0
+  poll: 0
+  ignore_errors: true
