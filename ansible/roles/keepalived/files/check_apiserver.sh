@@ -3,7 +3,7 @@
 ERR=0
 for k in `seq 1 10`; do
     FOUND=$(ps aux |grep kube-apiserver | grep -v grep | wc -l)
-    if [ "$FOUND" == "0" ]; then
+    if [ "$FOUND" = "0" ]; then
         ERR=$(expr $ERR + 1)
         sleep 5
         continue
