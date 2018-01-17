@@ -8,6 +8,6 @@
   register: KUBECTL_VERSION
 
 - name: Generate 'weavenet' network plugin yaml
-  local_action: shell wget -O /tmp/net.yaml "https://cloud.weave.works/k8s/net?k8s-version={{ KUBECTL_VERSION.stdout }}"
+  local_action: shell wget -O /tmp/net.yaml "{{ WEAVENET_YAML_URL_PREFIX }}{{ KUBECTL_VERSION.stdout }}"
   args:
     warn: no

@@ -7,7 +7,7 @@
   register: TOKEN
 
 - name: Generate a hash
-  shell: "openssl x509 -pubkey -in /etc/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'"
+  shell: "openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'"
   register: HASH
 
 - name: Generate a command line with join token for adding worker nodes

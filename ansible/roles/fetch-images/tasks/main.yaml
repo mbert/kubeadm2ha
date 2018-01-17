@@ -1,0 +1,27 @@
+#
+# Fetch images needed for Kubernetes.
+#
+---
+- name: Pull Kubernetes images
+  local_action: "command /usr/bin/docker pull {{ item.name }}:{{ item.tag }}"
+  register: docker_pull_status
+  changed_when: '"Downloaded newer version" in docker_pull_status.stdout'
+  with_items: "{{ DOCKER_IMAGES }}"
+  run_once: true
+
+- name: Pull network plugin images
+  local_action: "command /usr/bin/docker pull {{ item }}"
+  register: docker_pull_status
+  changed_when: '"Downloaded newer version" in docker_pull_status.stdout'
+  with_items: "{{ NETWORK_PLUGIN_IMAGE_SPECS_RESULT.stdout_lines }}"
+  run_once: true
+
+- name: Save Kubernetes images
+  local_action: "command /usr/bin/docker save -o /tmp/{{ (item.name + item.tag) | hash('sha256') }}.tar {{ item.name }}:{{ item.tag }}"
+  with_items: "{{ DOCKER_IMAGES }}"
+  run_once: true
+
+- name: Save network plugin images
+  local_action: "command /usr/bin/docker save -o /tmp/{{ item | hash('sha256') }}.tar {{ item }}"
+  with_items: "{{ NETWORK_PLUGIN_IMAGE_SPECS_RESULT.stdout_lines }}"
+  run_once: true

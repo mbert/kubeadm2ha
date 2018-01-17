@@ -1,0 +1,16 @@
+#
+# Playbook to uninstall the dashboard
+#
+---
+
+- name: Uninstall Dashboard
+  hosts: nodes
+  remote_user: root
+  gather_facts: no
+  any_errors_fatal: yes
+  tasks:
+  - import_tasks: roles/dashboard/tasks/uninstall.yaml
+    when: "'primary-master' in group_names"
+  tags:
+  - uninstall-dashboard
+

@@ -3,7 +3,7 @@
 #
 --- 
 
-- name: Uninstall
+- name: Uninstall Cluster
   hosts: nodes
   remote_user: root
   gather_facts: no
@@ -11,5 +11,5 @@
   roles:
   - uninstall
   tags:
-  - uninstall
+  - uninstall-cluster
 

@@ -4,5 +4,5 @@ KUBECONFIG=/etc/kubernetes/admin.conf
 export KUBECONFIG
 
 {% for host in groups['masters'] %}
-kubectl patch node {{ hostvars[host]['ansible_fqdn'] }} -p '{"spec":{"unschedulable":true}}' || exit 1
+kubectl cordon {{ hostvars[host]['ansible_fqdn'] }} || exit 1
 {% endfor %}

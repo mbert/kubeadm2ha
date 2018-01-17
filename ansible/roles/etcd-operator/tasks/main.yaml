@@ -1,0 +1,15 @@
+#
+# Set up etcd-operator
+#
+---
+- name: Get latest etcd-operator release
+  local_action: command wget -O /tmp/etcd-operator.zip https://github.com/coreos/etcd-operator/archive/master.zip
+  args:
+    warn: no
+
+- name: Unpack etcd-operator.zip
+  unarchive: copy=yes src=/tmp/etcd-operator.zip dest=/root/setup
+
+- name: Install etcd-operator
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; cd /root/setup/etcd-operator-master && example/rbac/create_role.sh && kubectl create -f example/deployment.yaml"
+

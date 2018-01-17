@@ -6,12 +6,3 @@
 - name: Set kube-dns replicas.
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/kube-dns
 
-- name: Get current kube-proxy settings
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl get -n kube-system configmap/kube-proxy -o yaml >/tmp/kube-proxy.yaml
-
-- name: Edit current kube-proxy settings
-  command: "perl -pi -e 's|server: *https://.*:6443|server: https://{{ MASTER_VIP }}:8443|' /tmp/kube-proxy.yaml"
-
-- name: Apply edited kube-proxy settings
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl patch -n kube-system configmap/kube-proxy -p "`cat /tmp/kube-proxy.yaml`"
-

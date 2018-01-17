@@ -11,3 +11,16 @@
 
 - name: Enable and start nginx
   service: name=nginx enabled=yes state=restarted
+
+- name: Get current kube-proxy settings
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl get -n kube-system configmap/kube-proxy -o yaml >/tmp/kube-proxy.yaml
+  when: "'primary-master' in group_names"
+
+- name: Edit current kube-proxy settings
+  command: "perl -pi -e 's|server: *https://.*:6443|server: https://{{ MASTER_VIP }}:8443|' /tmp/kube-proxy.yaml"
+  when: "'primary-master' in group_names"
+
+- name: Apply edited kube-proxy settings
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl patch -n kube-system configmap/kube-proxy -p "`cat /tmp/kube-proxy.yaml`"
+  when: "'primary-master' in group_names"
+

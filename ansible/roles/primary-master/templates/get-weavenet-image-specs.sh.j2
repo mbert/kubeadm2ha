@@ -1,0 +1,12 @@
+#!/bin/sh
+
+errorExit() {
+	echo "*** $*" 1>&2
+	exit 1
+}
+
+wget -O /tmp/weavenet.yaml "{{ WEAVENET_YAML_URL_PREFIX }}{{ KUBECTL_VERSION.stdout }}"
+
+egrep '^[ \t]*image:' /tmp/weavenet.yaml  | sed 's/.*image: *//'
+
+rm -f /tmp/weavenet.yaml

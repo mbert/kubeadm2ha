@@ -1,0 +1,30 @@
+#
+# Uninstall dashboard
+#
+---
+
+#  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete pod `kubectl get pod -n kube-system | egrep '^(heapster|kubernetes-dashboard|monitoring-grafana|monitoring-influxdb)' | awk '{ print $1 }'`
+
+- name: Uninstall service heapster
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete service heapster
+
+- name: Uninstall service influxdb
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete service monitoring-influxdb
+
+- name: Uninstall service grafana
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete service monitoring-grafana
+
+- name: Uninstall service dashboard
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete service kubernetes-dashboard
+
+- name: Uninstall deployment heapster
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete deployment heapster
+
+- name: Uninstall deployment influxdb
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete deployment monitoring-influxdb
+
+- name: Uninstall deployment grafana
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete deployment monitoring-grafana
+
+- name: Uninstall deployment dashboard
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete deployment kubernetes-dashboard

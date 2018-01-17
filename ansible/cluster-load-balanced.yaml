@@ -1,0 +1,15 @@
+#
+# Playbook to setup an NGINX load balancer for the cluster's apiserver.
+#
+--- 
+
+- name: NGINX
+  hosts: masters
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - nginx
+  tags:
+  - nginx
+

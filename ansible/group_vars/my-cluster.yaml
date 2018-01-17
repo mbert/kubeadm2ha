@@ -1,0 +1,7 @@
+
+#
+# Variables for the 'md-kubernetes' environment
+#
+--- 
+CLUSTER_NAME: md-kubernetes
+MASTER_VIP: 192.168.0.50

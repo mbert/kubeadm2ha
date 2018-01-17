@@ -1,2 +1,4 @@
 *~
 *.retry
+group_vars/md-kubernetes.yaml
+md-kubernetes.inventory
