@@ -9,8 +9,15 @@ my-cluster-master-3 ansible_ssh_host=192.168.0.53
 primary-master
 secondary-masters
 
+[primary-etcd:children]
+primary-master
+
+[secondary-etcds:children]
+secondary-masters
+
 [etcd:children]
-masters
+primary-etcd
+secondary-etcds
 
 [minions]
 my-cluster-minion-1 ansible_ssh_host=192.168.0.56
@@ -21,5 +28,9 @@ my-cluster-minion-3 ansible_ssh_host=192.168.0.58
 masters
 minions
 
-[my-cluster:children]
+[md-kubernetes:children]
 nodes
+
+# Testing only
+[admin]
+my-cluster-admin ansible_ssh_host=192.168.0.55

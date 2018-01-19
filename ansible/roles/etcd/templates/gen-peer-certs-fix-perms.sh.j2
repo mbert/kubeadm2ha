@@ -1,0 +1,24 @@
+#!/bin/sh
+
+errorExit() {
+	echo "*** $*" 1>&2
+	exit 1
+}
+
+cd /etc/etcd/pki || errorExit "Error chdir"
+
+/tmp/cfssl print-defaults csr > config.json || errorExit "Error cfssl"
+
+sed -i '0,/CN/{s/example\.net/{{ ansible_fqdn }}/}' config.json
+sed -i 's/www\.example\.net/{{ ansible_default_ipv4.address }}/' config.json
+sed -i 's/example\.net/{{ ansible_default_ipv4.address }}/' config.json
+
+/tmp/cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=server config.json | /tmp/cfssljson -bare server || errorExit "Error cfssl profile server"
+/tmp/cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=peer config.json | /tmp/cfssljson -bare peer || errorExit "Error cfssl profile peer"
+
+if grep -q '^etcd:' /etc/passwd; then
+	chown etcd *
+fi
+if grep -q '^etcd:' /etc/group; then
+	chgrp etcd *
+fi

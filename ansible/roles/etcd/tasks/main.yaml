@@ -2,6 +2,65 @@
 # Sets up etcd on the masters.
 #
 ---
+- name: Get cfssl
+  local_action: "command wget --continue -O /tmp/cfssl https://pkg.cfssl.org/R1.2/cfssl_linux-{{ HOST_ARCH }}"
+  run_once: true
+  args:
+    warn: no
+
+- name: Copy cfssl
+  copy: src=/tmp/cfssl dest=/tmp/cfssl mode=0755
+
+- name: Get cfssljson
+  local_action: "command wget --continue -O /tmp/cfssljson https://pkg.cfssl.org/R1.2/cfssljson_linux-{{ HOST_ARCH }}"
+  run_once: true
+  args:
+    warn: no
+
+- name: Copy cfssljson
+  copy: src=/tmp/cfssljson dest=/tmp/cfssljson mode=0755
+
+- name: Create cert dir for etcd
+  file: path=/etc/etcd/pki state=directory
+
+- name: Copy ca-config.json
+  copy: src=ca-config.json dest=/etc/etcd/pki/ca-config.json
+  when: "'primary-etcd' in group_names"
+
+- name: Copy ca-csr.json
+  template: src=ca-csr.json.j2 dest=/etc/etcd/pki/ca-csr.json
+  when: "'primary-etcd' in group_names"
+
+- name: Copy client.json
+  copy: src=client.json dest=/etc/etcd/pki/client.json
+  when: "'primary-etcd' in group_names"
+
+- name: Generate server certificate
+  shell: "cd /etc/etcd/pki/ && /tmp/cfssl gencert -initca ca-csr.json | /tmp/cfssljson -bare ca -"
+  when: "'primary-etcd' in group_names"
+
+- name: Generate client certificate
+  shell: "cd /etc/etcd/pki/ && /tmp/cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client client.json | /tmp/cfssljson -bare client"
+  run_once: true
+
+- name: Create an archive from the certificat files
+  archive: path=/etc/etcd/pki dest=/tmp/pki-etcd.tar.gz
+  run_once: true
+
+- name: Fetch cert files
+  fetch: src=/tmp/pki-etcd.tar.gz dest=/tmp/ flat=yes
+  when: "'primary-etcd' in group_names"
+
+- name: Copy cert files
+  unarchive: copy=yes src=/tmp/pki-etcd.tar.gz dest=/etc/etcd
+  when: "'secondary-etcds' in group_names"
+
+- name: Generate script for generating peer certs
+  template: src=gen-peer-certs-fix-perms.sh.j2 dest=/tmp/gen-peer-certs-fix-perms.sh mode=0755
+
+- name: Generate peer certs
+  command: /tmp/gen-peer-certs-fix-perms.sh
+
 - name: Install etcd via package manager
   package: name=etcd-{{ ETCD_VERSION }} state=present
 

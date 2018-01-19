@@ -23,10 +23,10 @@ In order to use the ansible scripts, at least two files need to be configured:
 
 1. Either edit _my-cluster.inventory_ or create your own. The inventory _must_ define the following groups: 
  _primary-master_ (a single machine on which _kubeadm_ will be run), _secondary-masters_ (the other masters), _masters_ (all masters), _minions_ (the worker nodes), _nodes_ (all nodes), _etcd_ (all machines on which etcd is installed, usually the masters).
-2. Either _group_vars/my-cluster.yaml_ to your needs or create your own. Override settings from _group_vars/all.yaml_ where necessary.
+2. Either edit _group_vars/my-cluster.yaml_ to your needs or create your own (named after the group defined in the inventory you want to use). Override settings from _group_vars/all.yaml_ where necessary.
 
 ## What the cluster setup does
-1. Set up an _etcd_ cluster on all hosts in group _etcd._.
+1. Set up an _etcd_ cluster with self-signed certificates on all hosts in group _etcd._.
 2. Set up a _keepalived_ cluster on all hosts in group _masters_.
 3. Set up a master instance on the host in group _primary-master_ using _kubeadm._
 4. Set up master instances on all hosts in group _secondary-masters_ by copying and patching (replace the primary master's host name and IP) the configuration created by _kubeadm_ and have them join the cluster.

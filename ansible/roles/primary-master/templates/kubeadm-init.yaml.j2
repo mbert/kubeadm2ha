@@ -16,5 +16,7 @@ etcd:
 {% for host in groups['masters'] %}
   - http://{{ hostvars[host]['ansible_default_ipv4']['address'] }}:2379
 {% endfor %}
-
+  caFile: /etc/etcd/pki/ca.pem
+  certFile: /etc/etcd/pki/client.pem
+  keyFile: /etc/etcd/pki/client-key.pem
 

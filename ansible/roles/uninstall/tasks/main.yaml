@@ -29,6 +29,10 @@
   file: path=/var/lib/etcd/default.etcd state=absent
   when: "'masters' in group_names"
 
+- name: Clean up etcd certificates on all masters
+  file: path=/etc/etcd/pki state=absent
+  when: "'masters' in group_names"
+
 - name: Reboot machine
   command: /sbin/shutdown -r +1
   async: 0
