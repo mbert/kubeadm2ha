@@ -6,9 +6,6 @@
 - name: Make sure that kubelet is not up
   service: name=kubelet state=stopped
 
-- name: Copy /tmp/kubernetes-conf.tar.gz
-  copy: src=/tmp/kubernetes-conf.tar.gz dest=/tmp/kubernetes-conf.tar.gz
-
 - name: Extract /tmp/kubernetes-conf.tar.gz
   unarchive: src=/tmp/kubernetes-conf.tar.gz dest=/etc/
 
