@@ -41,17 +41,17 @@
 
 - name: Generate client certificate
   shell: "cd /etc/etcd/pki/ && /tmp/cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client client.json | /tmp/cfssljson -bare client"
-  run_once: true
+  when: "'primary-etcd' in group_names"
 
-- name: Create an archive from the certificat files
+- name: Create an archive from the certificate files for the etcd instances
   archive: path=/etc/etcd/pki dest=/tmp/pki-etcd.tar.gz
-  run_once: true
+  when: "'primary-etcd' in group_names"
 
-- name: Fetch cert files
+- name: Fetch certificate files for the etcd instances
   fetch: src=/tmp/pki-etcd.tar.gz dest=/tmp/ flat=yes
   when: "'primary-etcd' in group_names"
 
-- name: Copy cert files
+- name: Unarchive certificate files for the etcd instances
   unarchive: copy=yes src=/tmp/pki-etcd.tar.gz dest=/etc/etcd
   when: "'secondary-etcds' in group_names"
 
@@ -63,6 +63,14 @@
 
 - name: Install etcd via package manager
   package: name=etcd-{{ ETCD_VERSION }} state=present
+
+- name: Create an archive from the certificate files for the masters
+  archive: path=/etc/etcd/pki/ca.pem,/etc/etcd/pki/client.pem,/etc/etcd/pki/client-key.pem dest=/tmp/pki-pems.tar.gz
+  when: "'primary-etcd' in group_names"
+
+- name: Fetch certificate files for the masters
+  fetch: src=/tmp/pki-pems.tar.gz dest=/tmp/ flat=yes
+  when: "'primary-etcd' in group_names"
 
 - name: Write etcd config file
   template: src=etcd.conf.j2 dest=/etc/etcd/etcd.conf group=etcd owner=etcd mode=0644
