@@ -17,6 +17,10 @@ This repository contains a set of ansible scripts to do this. There are three pl
 7. _local-access.yaml_ fetches a patched _admin.conf_ file to _/tmp/MY-CLUSTER-NAME-admin.conf_. After copying it to _~/.kube/config_ remote _kubectl_ access via V-IP / load balancer can be tested. 
 8. _uninstall-dashboard.yaml_ removes the dashboard.
 
+## Prerequisites
+
+Ansible version 2.4 or higher is required. Older versions will not work. 
+
 ## Configuration
 
 In order to use the ansible scripts, at least two files need to be configured:
@@ -37,6 +41,25 @@ In order to use the ansible scripts, at least two files need to be configured:
 - Add an NGINX-based load-balancer to the cluster. After this, the apiserver will be available through the virtual-IP on port 8443.
 - Add etcd-operator for use with applications running in the cluster. This is an add-on purely because I happen to need it.
 - Pre-fetch and transfer Kubernetes images. This is useful for systems without Internet access.
+
+## Examples
+
+To run one of the playbooks (e.g. to set up a cluster), run ansible like this:
+
+$ ansible-playbook -i <your-inventory-file>.inventory cluster-setup.yaml
+
+A sane sequence of playbooks for a complete setup would be:
+
+- cluster-setup.yaml
+- etcd-operator.yaml
+- cluster-dashboard.yaml
+- cluster-load-balanced.yaml
+
+The following playbooks can be used as needed:
+
+- cluster-uninstall.yaml
+- local-access.yaml
+- uninstall-dashboard.yaml
 
 ## Known limitations
 This is a preview in order to obtain early feedback. It is far from done. In particular:

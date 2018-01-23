@@ -7,7 +7,7 @@
   service: name=kubelet state=stopped
 
 - name: Extract /tmp/kubernetes-conf.tar.gz
-  unarchive: src=/tmp/kubernetes-conf.tar.gz dest=/etc/
+  unarchive: copy=yes src=/tmp/kubernetes-conf.tar.gz dest=/etc/
 
 - name: Generate script for adapting the copied files in /etc/kubernetes for the respective master host
   template: src=adapt-etc-kubernetes.sh.j2 dest=/root/adapt-etc-kubernetes.sh
