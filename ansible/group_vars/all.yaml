@@ -9,6 +9,8 @@
 DNS_IP: 192.168.0.20
 HAS_LB: no
 HOST_ARCH: amd64
+MASTER_READY_WAIT_SEC: 30
+APISERVER_READY_WAIT_SEC: 30
 
 # Network settings
 # Choices are: flannel, weavenet, calico

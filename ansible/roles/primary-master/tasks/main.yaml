@@ -38,10 +38,10 @@
   systemd: name=kubelet state=restarted enabled=yes
 
 - name: Wait for apiserver to be restarted
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; it=0; while ! kubectl get nodes; do test $it -gt 30 && exit 1; echo "Waiting for apiserver to be restarted..."; sleep 2s; it=`expr $it + 1`; done
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; it=0; while ! kubectl get nodes; do test $it -gt {{ APISERVER_READY_WAIT_SEC }} && exit 1; echo "Waiting for apiserver to be restarted..."; sleep 2s; it=`expr $it + 1`; done
 
 - name: Wait for master node to be ready
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; it=0; while kubectl get nodes | grep -q "NotReady"; do test $it -gt 30 && exit 1; echo "Waiting for primary node to be ready..."; sleep 2s; it=`expr $it + 1`; done
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; it=0; while kubectl get nodes | grep -q "NotReady"; do test $it -gt {{ MASTER_READY_WAIT_SEC }} && exit 1; echo "Waiting for primary node to be ready..."; sleep 2s; it=`expr $it + 1`; done
 
 - name: Create archive from /etc/kubernetes
   archive: path=/etc/kubernetes dest=/tmp/kubernetes-conf.tar.gz
