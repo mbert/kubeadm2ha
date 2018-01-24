@@ -8,7 +8,7 @@
 
 - name: Copy network plugin images
   copy: src="/tmp/{{ item | hash('sha256') }}.tar" dest="/tmp/{{ item | hash('sha256') }}.tar"
-  with_items: "{{ NETWORK_PLUGIN_IMAGE_SPECS_RESULT.stdout_lines }}"
+  with_items: "{{ NETWORK_PLUGIN_IMAGE_SPECS_RESULT.stdout_lines | unique }}"
 
 - name: Load Kubernetes images
   command: /usr/bin/docker load -i /tmp/{{ (item.name + item.tag) | hash('sha256') }}.tar
@@ -16,4 +16,4 @@
 
 - name: Load network plugin images
   command: /usr/bin/docker load -i /tmp/{{ item | hash('sha256') }}.tar
-  with_items: "{{ NETWORK_PLUGIN_IMAGE_SPECS_RESULT.stdout_lines }}"
+  with_items: "{{ NETWORK_PLUGIN_IMAGE_SPECS_RESULT.stdout_lines | unique }}"

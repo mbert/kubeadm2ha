@@ -42,11 +42,20 @@ In order to use the ansible scripts, at least two files need to be configured:
 - Add etcd-operator for use with applications running in the cluster. This is an add-on purely because I happen to need it.
 - Pre-fetch and transfer Kubernetes images. This is useful for systems without Internet access.
 
+## What the images setup does
+
+1. Pull all required images locally (hence you need to make sure to have docker installed on the host from which you run ansible).
+2. Export the images to tar files.
+3. Copy the tar files over to the target hosts.
+4. Import the images from the tar files on the target hosts.
+
 ## Examples
 
 To run one of the playbooks (e.g. to set up a cluster), run ansible like this:
 
 $ ansible-playbook -i <your-inventory-file>.inventory cluster-setup.yaml
+
+You might want to adapt the number of parallel processes to your number of hosts using the `-f' option.
 
 A sane sequence of playbooks for a complete setup would be:
 

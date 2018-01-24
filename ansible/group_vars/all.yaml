@@ -37,7 +37,6 @@ KEEPALIVED_VERSION: "1.3.5"
 NGINX_VERSION: "1.12.2"
 
 # Tags for some images
-FLANNEL_TAG: "v0.9.1-{{ HOST_ARCH }}"
 ETCD_TAG: "3.0.17"
 PAUSE_TAG: "3.0"
 ETCD_OPERATOR_TAG: "v0.2.1"
@@ -51,7 +50,6 @@ DOCKER_IMAGES: [
   { name: "gcr.io/google_containers/k8s-dns-sidecar-{{ HOST_ARCH }}", tag: "{{ KUBERNETES_DNS_VERSION }}" },
   { name: "gcr.io/google_containers/k8s-dns-kube-dns-{{ HOST_ARCH }}", tag: "{{ KUBERNETES_DNS_VERSION }}" },
   { name: "gcr.io/google_containers/k8s-dns-dnsmasq-nanny-{{ HOST_ARCH }}", tag: "{{ KUBERNETES_DNS_VERSION }}" },
-  { name: "quay.io/coreos/flannel", tag: "{{ FLANNEL_TAG }}" },
   { name: "gcr.io/google_containers/etcd-{{ HOST_ARCH }}", tag: "{{ ETCD_TAG }}" },
   { name: "gcr.io/google_containers/pause-{{ HOST_ARCH }}", tag: "{{ PAUSE_TAG }}" },
   { name: "quay.io/coreos/etcd-operator", tag: "{{ ETCD_OPERATOR_TAG }}" }

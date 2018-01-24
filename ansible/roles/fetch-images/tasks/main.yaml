@@ -2,6 +2,10 @@
 # Fetch images needed for Kubernetes.
 #
 ---
+- name: Make sure that docker is installed on the local host
+  local_action: "shell which docker"
+  run_once: true
+
 - name: Pull Kubernetes images
   local_action: "command /usr/bin/docker pull {{ item.name }}:{{ item.tag }}"
   register: docker_pull_status
@@ -13,7 +17,7 @@
   local_action: "command /usr/bin/docker pull {{ item }}"
   register: docker_pull_status
   changed_when: '"Downloaded newer version" in docker_pull_status.stdout'
-  with_items: "{{ NETWORK_PLUGIN_IMAGE_SPECS_RESULT.stdout_lines }}"
+  with_items: "{{ NETWORK_PLUGIN_IMAGE_SPECS_RESULT.stdout_lines | unique }}"
   run_once: true
 
 - name: Save Kubernetes images
@@ -23,5 +27,5 @@
 
 - name: Save network plugin images
   local_action: "command /usr/bin/docker save -o /tmp/{{ item | hash('sha256') }}.tar {{ item }}"
-  with_items: "{{ NETWORK_PLUGIN_IMAGE_SPECS_RESULT.stdout_lines }}"
+  with_items: "{{ NETWORK_PLUGIN_IMAGE_SPECS_RESULT.stdout_lines | unique }}"
   run_once: true

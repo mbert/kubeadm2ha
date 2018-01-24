@@ -3,12 +3,12 @@
 #
 --- 
 
-- name: Set up docker images for Kubernetes
+- name: Prepare image lists
   hosts: nodes
   remote_user: root
   gather_facts: no
   any_errors_fatal: yes
-  pre_tasks:
+  tasks:
   - name: Make sure that kubectl is installed on the primary master if 'weavenet' network plugin was selected
     package: name=kubectl-{{ KUBERNETES_VERSION }} state=present
     when: "'primary-master' in group_names and NETWORK_PLUGIN == 'weavenet'"
@@ -23,9 +23,27 @@
   - name: Register names and versions of images to pull
     local_action: command "/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh"
     register: NETWORK_PLUGIN_IMAGE_SPECS_RESULT
-  roles:
+  tags:
   - fetch-images
   - install-images
+
+- name: Pull docker images for Kubernetes
+  hosts: nodes
+  remote_user: root
+  gather_facts: no
+  any_errors_fatal: yes
+  roles:
+  - fetch-images
   tags:
-  - images
+  - fetch-images
+
+- name: Copy docker images for Kubernetes
+  hosts: nodes
+  remote_user: root
+  gather_facts: no
+  any_errors_fatal: yes
+  roles:
+  - install-images
+  tags:
+  - install-images
 
