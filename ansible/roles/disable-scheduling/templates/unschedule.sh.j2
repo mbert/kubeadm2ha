@@ -4,5 +4,15 @@ KUBECONFIG=/etc/kubernetes/admin.conf
 export KUBECONFIG
 
 {% for host in groups['masters'] %}
-kubectl cordon {{ hostvars[host]['ansible_fqdn'] }} || exit 1
+N=0
+while ! kubectl cordon {{ hostvars[host]['ansible_fqdn'] }}; do
+	if [ $N -gt 4 ]; then
+		echo "kubectl cordon did not succeed in time." 1>&2
+		exit 1
+	else
+		N=`expr $N + 1`
+	fi
+	echo "Waiting for kubectl cordon to succeed..."
+	sleep 1s
+done
 {% endfor %}

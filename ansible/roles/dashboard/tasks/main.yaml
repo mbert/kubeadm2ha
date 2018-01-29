@@ -3,6 +3,14 @@
 #
 ---
 
+- name: Make sure that 'rsync' is available on the local host
+  local_action: "shell which rsync"
+  run_once: true
+
+- name: Make sure that 'rsync' is available on the masters
+  package: name=rsync state=present
+  when: "'masters' in group_names"
+
 - name: Get the dashboard yaml
   local_action: shell wget -O /tmp/kubernetes-dashboard.yaml https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/alternative/kubernetes-dashboard.yaml
   args:

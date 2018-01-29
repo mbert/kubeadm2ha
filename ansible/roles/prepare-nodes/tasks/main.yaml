@@ -33,3 +33,7 @@
 - name: Unarchive certificate files for the etcd instances
   unarchive: copy=yes src=/tmp/pki-pems.tar.gz dest=/etc/kubernetes/pki/etcd
   when: "'masters' in group_names"
+
+- name: Create setup directory 
+  file: path=/root/setup state=directory
+
