@@ -1,0 +1,11 @@
+#
+# Make (etcd) client certs available to masters
+#
+---
+
+- name: Create cert dir for etcd
+  file: path=/etc/kubernetes/pki/etcd state=directory
+
+- name: Unarchive certificate files for the etcd instances
+  unarchive: copy=yes src=/tmp/pki-pems.tar.gz dest=/etc/kubernetes/pki/etcd
+

@@ -1,0 +1,41 @@
+#
+# Perform the upgrade sequence on one master: 
+# - drain the node the brutal way (i.e. no local data is preserved, daemonsets ignored)
+# - shut down kubernetes services
+# - upgrade software
+# - start kubernetes services
+# - uncordon the node
+#
+---
+
+- name: Cordon master node
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl cordon {{ hostvars[master]['ansible_fqdn'] }}"
+  when: "'primary-master' in group_names"
+
+- name: Shut down keepalived, kubelet, docker on master
+  service: name={{ item }} state=stopped
+  with_items:
+  - keepalived
+  - kubelet
+  - docker
+  when: "master == inventory_hostname"
+
+- name: Upgrade software
+  import_tasks: "{{ playbook_dir }}/roles/prepare-nodes/tasks/main.yaml"
+  when: "master == inventory_hostname"
+
+- name: Start up docker, kubelet, keepalived on master
+  service: name={{ item }} state=restarted
+  with_items:
+  - docker
+  - kubelet
+  - keepalived
+  when: "master == inventory_hostname"
+
+- name: Wait for masters
+  command: "sh /tmp/wait-for-masters.sh"
+  when: "'primary-master' in group_names"
+
+- name: Uncordon master node
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl uncordon {{ hostvars[master]['ansible_fqdn'] }}"
+  when: "'primary-master' in group_names"

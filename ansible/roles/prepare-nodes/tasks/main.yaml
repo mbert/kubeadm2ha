@@ -3,37 +3,23 @@
 #
 ---
 
-- name: Install perl via package manager
-  package: name=perl state=present
-
-- name: Install kubelet via package manager
-  package: name=kubelet-{{ KUBERNETES_VERSION }} state=present
-
-- name: Install kubectl via package manager
-  package: name=kubectl-{{ KUBERNETES_VERSION }} state=present
-
-- name: Install kubeadm via package manager
-  package: name=kubeadm-{{ KUBERNETES_VERSION }} state=present
-
-- name: Install kubernetes-cni via package manager
-  package: name=kubernetes-cni-{{ KUBERNETES_CNI_VERSION }} state=present
+- name: Make sure some needed software is installed via package manager
+  package: name={{ item }} state=present
+  with_items:
+  - perl
+  - kubelet-{{ KUBERNETES_VERSION }}
+  - kubectl-{{ KUBERNETES_VERSION }}
+  - kubeadm-{{ KUBERNETES_VERSION }}
+  - kubernetes-cni-{{ KUBERNETES_CNI_VERSION }}
 
 - name: Set cgroups driver to 'cgroupfs' 
-  command: perl -pi -e "s/--cgroup-driver=systemd/--cgroup-driver=cgroupfs/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+  command: "perl -pi -e 's/--cgroup-driver=systemd/--cgroup-driver=cgroupfs/g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf"
 
 - name: Reload systemd units
   # Fixme: 2.3.1.0 wants a 'name' argument here which is of course nonsense
   #systemd: daemon-reload=yes
   command: systemctl daemon-reload
 
-- name: Create cert dir for etcd
-  file: path=/etc/kubernetes/pki/etcd state=directory
-  when: "'masters' in group_names"
-
-- name: Unarchive certificate files for the etcd instances
-  unarchive: copy=yes src=/tmp/pki-pems.tar.gz dest=/etc/kubernetes/pki/etcd
-  when: "'masters' in group_names"
-
 - name: Create setup directory 
   file: path=/root/setup state=directory
-
+  when: "'primary-master' in group_names"

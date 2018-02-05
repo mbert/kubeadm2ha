@@ -1,0 +1,77 @@
+#
+# Upgrade a cluster's masters:
+# - cordon all secondary masters
+# - shut down kubernetes services on all secondary masters
+# - perform kubeadm upgrade on the primary master
+# - for all secondary masters:
+#   * patch and apply updated configuration
+#   * upgrade software on the secondary master
+#   * start kubernetes services
+#   * rejoin secondary master
+#   * uncordon secondary master
+# - cordon primary master
+# - shut down kubernetes services
+# - patch configuration on the primary master
+# - start kubernetes services
+# - uncordon primary master
+#
+---
+
+- name: Cordon secondary master
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl cordon {{ hostvars[secondary]['ansible_fqdn'] }}"
+  with_items: "{{ groups['secondary-masters'] }}"
+  loop_control:
+    loop_var: secondary
+  when: "'primary-master' in group_names"
+
+- name: Shut down keepalived, kubelet, docker on secondary masters
+  service: name={{ item }} state=stopped
+  with_items:
+  - keepalived
+  - kubelet
+  - docker
+  when: "'secondary-masters' in group_names"
+
+- name: Download updated kubeadm
+  local_action: "command wget --continue -O /tmp/kubeadm https://dl.k8s.io/release/v{{ KUBERNETES_VERSION }}/bin/linux/{{ HOST_ARCH }}/kubeadm"
+  run_once: true
+  args: 
+    warn: no
+
+- name: Copy updated kubeadm
+  copy: src=/tmp/kubeadm dest=/tmp/kubeadm mode=0755
+  when: "'primary-master' in group_names"
+
+- name: Run pre-upgrade check
+  command: "/tmp/kubeadm upgrade plan"
+  when: "'primary-master' in group_names"
+
+- name: Perform upgrade on primary master
+  command: "/tmp/kubeadm upgrade apply v{{ KUBERNETES_VERSION }} -y --etcd-upgrade=false"
+  when: "'primary-master' in group_names"
+
+- name: Get new /etc/kubernetes/manifests from primary master
+  archive: path=/etc/kubernetes/manifests,/etc/kubernetes/*.conf dest=/tmp/kubernetes-upgraded.tar.gz
+  when: "'primary-master' in group_names"
+
+- name: Get /tmp/kubernetes-upgraded.tar.gz from primary master
+  fetch: src=/tmp/kubernetes-upgraded.tar.gz dest=/tmp/ flat=yes
+  when: "'primary-master' in group_names"
+
+- name: Configure and start secondary masters one by one
+  include_tasks: upgrade-secondary.yaml
+  with_items: "{{ groups['secondary-masters'] }}"
+  loop_control:
+    loop_var: secondary
+
+- name: Remove 'NodeRestriction' from apiserver on primary master
+  command: "perl -pi -e 's/--admission-control=(.*)NodeRestriction(.*)/--admission-control=$1$2/; s/,,/,/g' /etc/kubernetes/manifests/kube-apiserver.yaml"
+  when: "'primary-master' in group_names"
+
+- name: Restart kubelet on primary master
+  service: name=kubelet state=restarted
+  when: "'primary-master' in group_names"
+
+- name: Set kube-dns replicas.
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/kube-dns
+  when: "'primary-master' in group_names"

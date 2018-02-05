@@ -1,0 +1,29 @@
+#
+# Upgrade a cluster's nodes one by one:
+# - cordon it if master, drain it if minion
+# - shut down kubernetes services
+# - upgrade its software 
+# - start kubernetes services
+# - uncordon it
+#
+---
+
+- name: Create script for waiting for masters
+  template: src="wait-for-masters.sh.j2" dest="/tmp/wait-for-masters.sh" mode=0755
+  when: "'primary-master' in group_names"
+
+- name: Make sure that all masters have come up (may still need some time after the previous step)
+  command: "sh /tmp/wait-for-masters.sh"
+  when: "'primary-master' in group_names"
+
+- name: Perform upgrade sequence on all masters one by one
+  include_tasks: upgrade-master.yaml
+  with_items: "{{ groups['masters'] }}"
+  loop_control:
+    loop_var: master
+
+- name: Perform upgrade sequence on all minions one by one
+  include_tasks: upgrade-minion.yaml
+  with_items: "{{ groups['minions'] }}"
+  loop_control:
+    loop_var: minion

@@ -29,7 +29,9 @@
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/net.yaml
 
 - name: Remove 'NodeRestriction' from apiserver
-  command: "perl -pi -e 's/.*--admission-control=.*/    - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds/' /etc/kubernetes/manifests/kube-apiserver.yaml"
+  command: "perl -pi -e 's/--admission-control=(.*)NodeRestriction(.*)/--admission-control=$1$2/; s/,,/,/g' /etc/kubernetes/manifests/kube-apiserver.yaml"
+
+#  command: "perl -pi -e 's/.*--admission-control=.*/    - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds/' /etc/kubernetes/manifests/kube-apiserver.yaml"
 
 - name: Restart docker
   systemd: name=docker state=restarted enabled=yes

@@ -1,3 +1,5 @@
 #!/bin/sh
 
+rm -f /etc/kubernetes/kubelet.conf /etc/kubernetes/pki/ca.crt
+
 kubeadm join --token {{ TOKEN.stdout }} {{ ansible_default_ipv4.address }}:6443 --discovery-token-ca-cert-hash sha256:{{ HASH.stdout }}

@@ -1,0 +1,35 @@
+#
+# Perform the upgrade sequence on one minion: 
+# - drain the node the brutal way (i.e. no local data is preserved, daemonsets ignored)
+# - shut down kubernetes services
+# - upgrade software
+# - start kubernetes services
+# - uncordon the node
+#
+---
+
+- name: Drain minion node
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl drain --delete-local-data --ignore-daemonsets {{ hostvars[minion]['ansible_fqdn'] }}"
+  when: "'primary-master' in group_names"
+
+- name: Shut down kubelet and docker on minion node
+  service: name={{ item }} state=stopped
+  with_items:
+  - kubelet
+  - docker
+  when: "minion == inventory_hostname"
+
+- name: Upgrade software on minion node
+  import_tasks: "{{ playbook_dir }}/roles/prepare-nodes/tasks/main.yaml"
+  when: "minion == inventory_hostname"
+
+- name: Start up docker and kubelet on minion node
+  service: name={{ item }} state=restarted
+  with_items:
+  - docker
+  - kubelet
+  when: "minion == inventory_hostname"
+
+- name: Uncordon minion node
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl uncordon {{ hostvars[minion]['ansible_fqdn'] }}"
+  when: "'primary-master' in group_names"

@@ -1,0 +1,43 @@
+#
+# Upgrade a secondary master.
+#
+---
+
+- name: Extract /tmp/kubernetes-upgraded.tar.gz to secondary master
+  unarchive: copy=yes src=/tmp/kubernetes-upgraded.tar.gz dest=/etc/kubernetes
+  when: "secondary == inventory_hostname"
+
+- name: Create script to fix IPs in /etc/kubernetes/manifests on secondary master
+  template: src={{ playbook_dir }}/roles/secondary-masters/templates/adapt-etc-kubernetes.sh.j2 dest=/tmp/adapt-etc-kubernetes.sh mode=0755
+  when: "secondary == inventory_hostname"
+
+- name: Fix IPs in /etc/kubernetes/manifests on secondary master
+  command: "sh /tmp/adapt-etc-kubernetes.sh"
+  when: "secondary == inventory_hostname"
+
+- name: Remove 'NodeRestriction' from apiserver on secondary master
+  command: "perl -pi -e 's/--admission-control=(.*)NodeRestriction(.*)/--admission-control=$1$2/; s/,,/,/g' /etc/kubernetes/manifests/kube-apiserver.yaml"
+  when: "secondary == inventory_hostname"
+
+- name: Start up docker, kubelet, keepalived on secondary master
+  service: name={{ item }} state=restarted
+  with_items:
+  - docker
+  - kubelet
+  - keepalived
+  when: "secondary == inventory_hostname"
+
+- name: Create script for waiting for secondary master
+  local_action: "template src=wait-for-secondary.sh.j2 dest=/tmp/wait-for-secondary-{{ secondary }}.sh mode=0755"
+  when: "secondary == inventory_hostname"
+
+- name: Wait for secondary master
+  script: "/tmp/wait-for-secondary-{{ secondary }}.sh"
+  when: "'primary-master' in group_names"
+
+- name: Uncordon secondary master
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl uncordon {{ hostvars[secondary]['ansible_fqdn'] }}"
+  when: "'primary-master' in group_names"
+
+
+

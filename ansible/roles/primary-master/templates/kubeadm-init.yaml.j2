@@ -13,8 +13,8 @@ apiServerCertSANs:
 - {{ MASTER_VIP }}
 etcd:
   endpoints:
-{% for host in groups['masters'] %}
-  - http://{{ hostvars[host]['ansible_default_ipv4']['address'] }}:2379
+{% for host in groups['etcd'] %}
+  - https://{{ hostvars[host]['ansible_default_ipv4']['address'] }}:2379
 {% endfor %}
   caFile: /etc/kubernetes/pki/etcd/ca.pem
   certFile: /etc/kubernetes/pki/etcd/client.pem
