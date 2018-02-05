@@ -97,7 +97,7 @@ If it has you may want to do this anyway to make the upgrade more seamless.
 
 To do so, run the following command:
 
-    ansible-playbook -f <good-number-of-concurrent-processes> -f <your-environment>.inventory cluster-images.yaml
+    ansible-playbook -f <good-number-of-concurrent-processes> -i <your-environment>.inventory cluster-images.yaml
 
 I usually set the number of concurrent processes manually because if a cluster consists of more than 5 (default) nodes picking a higher value here significantly speeds up the process.
 
@@ -107,7 +107,7 @@ You may want to backup _/etc/kubernetes_ on all your master machines. Do this be
 
 The actual upgrade is automated. Run the following command:
 
-    ansible-playbook -f <good-number-of-concurrent-processes> -f <your-environment>.inventory cluster-upgrade.yaml
+    ansible-playbook -f <good-number-of-concurrent-processes> -i <your-environment>.inventory cluster-upgrade.yaml
 
 See the comment above on setting the number of concurrent processes.
 
