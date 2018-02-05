@@ -133,7 +133,7 @@ If _kubeadm_ failed to upgrade the cluster it will try to perform a rollback. He
 
 If setting up the secondary masters failed you still have a working, upgraded cluster, but without redundant masters. You will have to find out what went wrong and join the secondaries manually. Once this has succeeded, finish the automatic upgrade process by processing the second half of the playbook only:
 
-    ansible-playbook -f <good-number-of-concurrent-processes> -f <your-environment>.inventory cluster-upgrade.yaml --tags nodes
+    ansible-playbook -f <good-number-of-concurrent-processes> -i <your-environment>.inventory cluster-upgrade.yaml --tags nodes
 
 If upgrading the software packages (i.e. the second half of the playbook) failed, you still have a working cluster. You may try to fix the problems and continue manually. See the _.yaml_ files under _roles/upgrade-nodes/tasks_ for what you need to do.
 
