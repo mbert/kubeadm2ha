@@ -3,6 +3,14 @@
 #
 ---
 
+- name: Shut down keepalived, kubelet, docker on secondary master
+  service: name={{ item }} state=stopped
+  with_items:
+  - keepalived
+  - kubelet
+  - docker
+  when: "secondary == inventory_hostname"
+
 - name: Extract /tmp/kubernetes-upgraded.tar.gz to secondary master
   unarchive: copy=yes src=/tmp/kubernetes-upgraded.tar.gz dest=/etc/kubernetes
   when: "secondary == inventory_hostname"
@@ -28,7 +36,11 @@
   when: "secondary == inventory_hostname"
 
 - name: Create script for waiting for secondary master
-  local_action: "template src=wait-for-secondary.sh.j2 dest=/tmp/wait-for-secondary-{{ secondary }}.sh mode=0755"
+  local_action: "template src=wait-for-single-master.sh.j2 dest=/tmp/wait-for-secondary-{{ secondary }}.sh mode=0755"
+  with_items:
+  - "{{ inventory_hostname }}"
+  loop_control:
+    loop_var: master
   when: "secondary == inventory_hostname"
 
 - name: Wait for secondary master

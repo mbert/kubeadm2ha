@@ -1,9 +1,9 @@
 #
 # Upgrade a cluster's masters:
 # - cordon all secondary masters
-# - shut down kubernetes services on all secondary masters
 # - perform kubeadm upgrade on the primary master
 # - for all secondary masters:
+#   * shut down kubernetes services
 #   * patch and apply updated configuration
 #   * upgrade software on the secondary master
 #   * start kubernetes services
@@ -17,37 +17,29 @@
 #
 ---
 
-- name: Cordon secondary master
+- name: Cordon secondary masters
   shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl cordon {{ hostvars[secondary]['ansible_fqdn'] }}"
   with_items: "{{ groups['secondary-masters'] }}"
   loop_control:
     loop_var: secondary
   when: "'primary-master' in group_names"
 
-- name: Shut down keepalived, kubelet, docker on secondary masters
-  service: name={{ item }} state=stopped
-  with_items:
-  - keepalived
-  - kubelet
-  - docker
-  when: "'secondary-masters' in group_names"
-
 - name: Download updated kubeadm
-  local_action: "command wget --continue -O /tmp/kubeadm https://dl.k8s.io/release/v{{ KUBERNETES_VERSION }}/bin/linux/{{ HOST_ARCH }}/kubeadm"
+  local_action: "command wget --continue -O /tmp/kubeadm-{{ KUBERNETES_VERSION }} https://dl.k8s.io/release/v{{ KUBERNETES_VERSION }}/bin/linux/{{ HOST_ARCH }}/kubeadm"
   run_once: true
   args: 
     warn: no
 
 - name: Copy updated kubeadm
-  copy: src=/tmp/kubeadm dest=/tmp/kubeadm mode=0755
+  copy: src=/tmp/kubeadm-{{ KUBERNETES_VERSION }} dest=/tmp/kubeadm-{{ KUBERNETES_VERSION }} mode=0755
   when: "'primary-master' in group_names"
 
 - name: Run pre-upgrade check
-  command: "/tmp/kubeadm upgrade plan"
+  command: "/tmp/kubeadm-{{ KUBERNETES_VERSION }} upgrade plan"
   when: "'primary-master' in group_names"
 
 - name: Perform upgrade on primary master
-  command: "/tmp/kubeadm upgrade apply v{{ KUBERNETES_VERSION }} -y --etcd-upgrade=false"
+  command: "/tmp/kubeadm-{{ KUBERNETES_VERSION }} upgrade apply v{{ KUBERNETES_VERSION }} -y --etcd-upgrade=false"
   when: "'primary-master' in group_names"
 
 - name: Get new /etc/kubernetes/manifests from primary master
@@ -70,6 +62,18 @@
 
 - name: Restart kubelet on primary master
   service: name=kubelet state=restarted
+  when: "'primary-master' in group_names"
+
+- name: Create script for waiting for primary master
+  local_action: "template src=wait-for-single-master.sh.j2 dest=/tmp/wait-for-primary-master.sh mode=0755"
+  with_items:
+  - "{{ inventory_hostname }}"
+  loop_control:
+    loop_var: master
+  when: "'primary-master' in group_names"
+
+- name: Wait for primary master
+  script: "/tmp/wait-for-primary-master.sh"
   when: "'primary-master' in group_names"
 
 - name: Set kube-dns replicas.

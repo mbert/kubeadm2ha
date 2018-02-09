@@ -1,0 +1,32 @@
+#!/bin/sh
+
+KUBECONFIG=/etc/kubernetes/admin.conf
+export KUBECONFIG
+
+MAX_WAIT_SECONDS=180
+INCREMENT_SECONDS=10
+N=0
+READY=false
+while [ "$READY" != "true" ]; do
+	READY=true
+
+	if [ $N -gt ${MAX_WAIT_SECONDS} ]; then
+		echo "Secondary masters have not come up within ${MAX_WAIT_SECONDS} seconds." 1>&2
+		exit 1
+	else
+		N=`expr $N + ${INCREMENT_SECONDS}`
+	fi
+
+{% for host in groups['masters'] %}	if kubectl get nodes | egrep -q "^{{ hostvars[host]['ansible_fqdn'] }}[ \t]*Ready"; then
+		echo "Node {{ hostvars[host]['ansible_fqdn'] }} is ready."
+	else
+		echo "Node {{ hostvars[host]['ansible_fqdn'] }} is not yet ready."
+		READY=false
+	fi
+
+{% endfor %}
+	if [ "$READY" != "true" ]; then
+		sleep ${INCREMENT_SECONDS}s
+	fi
+done
+

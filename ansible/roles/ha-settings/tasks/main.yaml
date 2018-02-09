@@ -2,6 +2,28 @@
 # Apply settings on the redundant masters.
 #
 ---
+- name: Create script for waiting for secondary masters
+  template: "src=wait-for-single-master.sh.j2 dest=/tmp/wait-for-master-{{ master }}.sh mode=0755"
+  with_items:
+  - "{{ groups['secondary-masters'] }}"
+  loop_control:
+    loop_var: master
+  when: "'primary-master' in group_names"
+
+- name: Wait for secondary master to be ready
+  command: "sh /tmp/wait-for-master-{{ master }}.sh"
+  with_items:
+  - "{{ groups['secondary-masters'] }}"
+  loop_control:
+    loop_var: master
+  when: "'primary-master' in group_names"
+
+- name: Set node-role.kubernetes.io/master:NoSchedule taint on secondary masters
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl taint nodes {{ hostvars[secondary]['ansible_fqdn'] }} node-role.kubernetes.io/master=value:NoSchedule"
+  with_items: "{{ groups['secondary-masters'] }}"
+  loop_control:
+    loop_var: secondary
+  when: "'primary-master' in group_names"
 
 - name: Set kube-dns replicas.
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/kube-dns
