@@ -58,15 +58,15 @@
 - name: Install heapster
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/setup/dashboard/heapster/deploy/kube-config/rbac/heapster-rbac.yaml
 
-- name: Set kubernetes dashboard replicas.
+- name: Set kubernetes dashboard replicas
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/kubernetes-dashboard
 
-- name: Set heapster replicas.
+- name: Set heapster replicas
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/heapster
 
-- name: Set grafana replicas.
+- name: Set grafana replicas
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/monitoring-grafana
 
-- name: Set influxdb replicas.
+- name: Set influxdb replicas
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/monitoring-influxdb
 
