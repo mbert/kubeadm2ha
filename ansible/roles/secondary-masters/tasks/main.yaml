@@ -6,15 +6,14 @@
 - name: Make sure that kubelet is not up
   service: name=kubelet state=stopped
 
-- name: Extract /tmp/kubernetes-conf.tar.gz
-  unarchive: copy=yes src=/tmp/kubernetes-conf.tar.gz dest=/etc/
+- name: Unarchive master-certs.tar.gz to /etc/kubernetes/pki/
+  unarchive: copy=yes src=/tmp/master-certs.tar.gz dest=/etc/kubernetes/pki/
 
-- name: Generate script for adapting the copied files in /etc/kubernetes for the respective master host
-  template: src=adapt-etc-kubernetes.sh.j2 dest=/root/adapt-etc-kubernetes.sh
+- name: Generate 'kubeadm' configuration file
+  template: src=kubeadm-init.yaml.j2 dest=/root/kubeadm-init.yaml
 
-- name: Adapt IP addresses in /etc/kubernetes to respective master host
-  command: sh /root/adapt-etc-kubernetes.sh
-
-- name: Start kubelet on secondary master
-  service: name=kubelet state=started enabled=yes
-
+- name: Setup secondary masters one by one
+  include_tasks: secondary-master.yaml
+  with_items: "{{ groups['secondary-masters'] }}"
+  loop_control:
+    loop_var: master

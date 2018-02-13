@@ -1,0 +1,21 @@
+apiVersion: kubeadm.k8s.io/v1alpha1
+kind: MasterConfiguration
+kubernetesVersion: v{{ KUBERNETES_VERSION }}
+networking:
+  podSubnet: {{ POD_NETWORK_CIDR }}
+api:
+  advertiseAddress: {{ ansible_default_ipv4.address }}
+apiServerCertSANs:
+- 127.0.0.1
+- {{ ansible_default_ipv4.address }}
+- {{ MASTER_VIP }}
+etcd:
+  endpoints:
+{% for host in groups['etcd'] %}
+  - https://{{ hostvars[host]['ansible_default_ipv4']['address'] }}:2379
+{% endfor %}
+  caFile: /etc/kubernetes/pki/etcd/ca.pem
+  certFile: /etc/kubernetes/pki/etcd/client.pem
+  keyFile: /etc/kubernetes/pki/etcd/client-key.pem
+apiServerExtraArgs:
+  {% if KUBERNETES_VERSION | match('^1\.8') %}apiserver-count: "{{ groups['masters'] | length }}"{% else %}endpoint-reconciler-type: "lease"{% endif %}

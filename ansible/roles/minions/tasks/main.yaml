@@ -10,3 +10,11 @@
 
 - name: Join worker-node
   command: sh /root/join-worker-node.sh
+
+- name: Create script for waiting for minions
+  template: src="wait-for-minions.sh.j2" dest="/tmp/wait-for-minions.sh" mode=0755
+  when: "'primary-master' in group_names"
+
+- name: Wait for minions
+  command: "sh /tmp/wait-for-minions.sh"
+  when: "'primary-master' in group_names"

@@ -1,0 +1,8 @@
+#
+# Run kubeadm on a secondary master
+#
+---
+
+- name: Run 'kubeadm'
+  command: kubeadm init --config=/root/kubeadm-init.yaml
+  when: "master == inventory_hostname"

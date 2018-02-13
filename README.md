@@ -113,9 +113,7 @@ See the comment above on setting the number of concurrent processes.
 
 The upgrade is not fully free of disruptions:
 
-- the secondary masters are cordoned and their kubernetes services shut down before running the upgrade
-- the actual upgrade using _kubeadm_ is performed on the primary master
-- while _kubeadm_ applies the changes on the primary master, services like Kube DNS or API Server will be unavailable for a short time (they are being restarted in the upgrade process)
+- while _kubeadm_ applies the changes on a master, it restarts a number of services, hence they may be unavailable for a short time
 - if containers running on the minions keep local data they have to take care to rebuild it when relocated to different minions during the upgrade process (i.e. local data is ignored)
 
 If any of these is unacceptable, a fully automated upgrade process does not really make any sense because deep knowledge of the application running in a respective cluster is required to work around this.
@@ -129,9 +127,9 @@ After the upgrade the NGINX load balancer will not be in use. To reenable it, si
 
 If the upgrade fails the situation afterwards depends on the phase in which things went wrong.
 
-If _kubeadm_ failed to upgrade the cluster it will try to perform a rollback. Hence in that case chances are pretty good that the cluster is still intact. In that case all you need is to start _docker_, _kubelet_ and _keepalived_ on the secondary masters and then uncordon them (`kubectl uncordon <secondary-master-fqdn>`) to be back where you started from.
+If _kubeadm_ failed to upgrade the cluster it will try to perform a rollback. Hence if that happened on the first master, chances are pretty good that the cluster is still intact. In that case all you need is to start _docker_, _kubelet_ and _keepalived_ on the secondary masters and then uncordon them (`kubectl uncordon <secondary-master-fqdn>`) to be back where you started from.
 
-If setting up the secondary masters failed you still have a working, upgraded cluster, but without redundant masters. You will have to find out what went wrong and join the secondaries manually. Once this has succeeded, finish the automatic upgrade process by processing the second half of the playbook only:
+If _kubeadm_ on one of the secondary masters failed you still have a working, upgraded cluster, but without the secondary masters in a somewhat undefined condition. You will have to find out what went wrong and join the secondaries manually. Once this has succeeded, finish the automatic upgrade process by processing the second half of the playbook only:
 
     ansible-playbook -f <good-number-of-concurrent-processes> -i <your-environment>.inventory cluster-upgrade.yaml --tags nodes
 

@@ -19,13 +19,37 @@
   when: "'primary-master' in group_names"
 
 - name: Set kube-dns replicas
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/kube-dns
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/kube-dns"
   when: "'primary-master' in group_names"
 
-- name: Set node-role.kubernetes.io/master:NoSchedule taint on secondary masters
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl taint nodes {{ hostvars[secondary]['ansible_fqdn'] }} node-role.kubernetes.io/master=value:NoSchedule"
-  with_items: "{{ groups['secondary-masters'] }}"
-  loop_control:
-    loop_var: secondary
+- name: Get current kube-proxy settings
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl get configmap -n kube-system kube-proxy -o yaml >/tmp/kube-proxy-cm.yaml"
   when: "'primary-master' in group_names"
 
+- name: Edit current kube-proxy settings to use the virtual IP instead of the host IP
+  command: "perl -pi -e 's|server: *https://.*:6443|server: https://{{ MASTER_VIP }}:6443|' /tmp/kube-proxy-cm.yaml"
+  when: "'primary-master' in group_names"
+
+- name: Apply edited kube-proxy settings
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /tmp/kube-proxy-cm.yaml --force"
+  when: "'primary-master' in group_names"
+
+- name: Force restart of all kube-proxy pods
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl delete pod -n kube-system -l k8s-app=kube-proxy"
+  when: "'primary-master' in group_names"
+
+- name: Get current kube-proxy settings
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl get configmap -n kube-system kube-proxy -o yaml >/tmp/kube-proxy-cm.yaml"
+  when: "'primary-master' in group_names"
+
+- name: Edit current kube-proxy settings to use the virtual IP instead of the host IP
+  command: "perl -pi -e 's|server: *https://.*:6443|server: https://{{ MASTER_VIP }}:6443|' /tmp/kube-proxy-cm.yaml"
+  when: "'primary-master' in group_names"
+
+- name: Apply edited kube-proxy settings
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /tmp/kube-proxy-cm.yaml --force"
+  when: "'primary-master' in group_names"
+
+- name: Force restart of all kube-proxy pods
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl delete pod -n kube-system -l k8s-app=kube-proxy"
+  when: "'primary-master' in group_names"
