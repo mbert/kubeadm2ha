@@ -3,36 +3,15 @@
 #
 ---
 
-- name: Make sure that we're on a supported NETWORK_PLUGIN
-  fail: msg="Unsupported NETWORK_PLUGIN. Check roles/primary-master/tasks/*.yaml"
-  when: "NETWORK_PLUGIN not in [ 'flannel', 'weavenet', 'calico' ]"
-
 - name: Generate 'kubeadm' configuration file
   template: src=kubeadm-init.yaml.j2 dest=/root/kubeadm-init.yaml
 
 - name: Run 'kubeadm'
   command: kubeadm init --config=/root/kubeadm-init.yaml
 
-- import_tasks: weavenet.yaml
-  when: NETWORK_PLUGIN == 'weavenet'
-
-- import_tasks: flannel.yaml
-  when: NETWORK_PLUGIN == 'flannel'
-
-- import_tasks: calico.yaml
-  when: NETWORK_PLUGIN == 'calico'
-
-- name: Copy network plugin yaml
-  copy: src=/tmp/net.yaml dest=/root/net.yaml
-
-- name: Apply network plugin yaml
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/net.yaml
-
-- name: Archive /etc/kubernetes/pki/ca.*
-  archive: path=/etc/kubernetes/pki/ca.* dest=/tmp/master-certs.tar.gz
+- name: Archive /etc/kubernetes/pki/[cs]a.*
+  archive: path=/etc/kubernetes/pki/[cs]a.* dest=/tmp/master-certs.tar.gz
 
 - name: Fetch /tmp/master-certs.tar.gz
   fetch: src=/tmp/master-certs.tar.gz dest=/tmp/ flat=yes
 
-- name: Wait for master node to be ready
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; it=0; while kubectl get nodes | grep -q "NotReady"; do test $it -gt {{ MASTER_READY_WAIT_SEC }} && exit 1; echo "Waiting for primary node to be ready..."; sleep 2s; it=`expr $it + 1`; done

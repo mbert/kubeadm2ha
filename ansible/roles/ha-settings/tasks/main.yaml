@@ -5,7 +5,7 @@
 - name: Create script for waiting for secondary masters
   template: "src=wait-for-single-master.sh.j2 dest=/tmp/wait-for-master-{{ master }}.sh mode=0755"
   with_items:
-  - "{{ groups['secondary-masters'] }}"
+  - "{{ groups['masters'] }}"
   loop_control:
     loop_var: master
   when: "'primary-master' in group_names"

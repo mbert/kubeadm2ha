@@ -42,6 +42,7 @@
   - {role: client-certs,       when: "'masters'           in group_names" }
   - {role: primary-master,     when: "'primary-master'    in group_names" }
   - {role: secondary-masters,  when: "'secondary-masters' in group_names" }
+  - {role: network-plugin,     when: "'primary-master'    in group_names" }
   - {role: ha-settings,        when: "'primary-master'    in group_names" }
   tags:
   - masters

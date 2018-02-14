@@ -1,0 +1,24 @@
+#
+# Install network plugin
+#
+---
+
+- name: Make sure that we're on a supported NETWORK_PLUGIN
+  fail: msg="Unsupported NETWORK_PLUGIN. Check roles/primary-master/tasks/*.yaml"
+  when: "NETWORK_PLUGIN not in [ 'flannel', 'weavenet', 'calico' ]"
+
+- import_tasks: weavenet.yaml
+  when: NETWORK_PLUGIN == 'weavenet'
+
+- import_tasks: flannel.yaml
+  when: NETWORK_PLUGIN == 'flannel'
+
+- import_tasks: calico.yaml
+  when: NETWORK_PLUGIN == 'calico'
+
+- name: Copy network plugin yaml
+  copy: src=/tmp/net.yaml dest=/root/net.yaml
+
+- name: Apply network plugin yaml
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/net.yaml
+

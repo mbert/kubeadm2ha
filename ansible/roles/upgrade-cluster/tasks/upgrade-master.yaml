@@ -3,40 +3,19 @@
 #
 ---
 
-  # This has turned out to be ncesseary, so that on any master node kubeadm upgrade apply can be run
-- name: Get configmap/kubeadm-config for editing
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl get configmap -n kube-system kubeadm-config -o yaml >/tmp/kubeadm-config-cm.yaml"
+- name: Create script for running upgrade with retries
+  template: src=upgrade-with-retries.sh.j2 dest=/root/upgrade-with-retries.sh mode=0755
   when: "master == inventory_hostname"
 
-- name: Edit current kubeadm-config to adapt MasterConfiguration.nodeName
-  command: "sed -i 's/^\\([ \\t]*nodeName:\\).*/\\1 {{ hostvars[master]['ansible_fqdn'] }}/' /tmp/kubeadm-config-cm.yaml"
+- name: Perform upgrade with retries on master
+  command: "/root/upgrade-with-retries.sh"
   when: "master == inventory_hostname"
 
-- name: Apply edited kubeadm-config settings
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /tmp/kubeadm-config-cm.yaml --force"
-  when: "master == inventory_hostname"
-
-- name: Shut down keepalived on master
-  service: name=keepalived state=stopped
-  when: "master == inventory_hostname"
-
-- name: Run pre-upgrade check
-  command: "/tmp/kubeadm-{{ KUBERNETES_VERSION }} upgrade plan"
-  when: "master == inventory_hostname"
-
-- name: Perform upgrade on master
-  command: "/tmp/kubeadm-{{ KUBERNETES_VERSION }} upgrade apply v{{ KUBERNETES_VERSION }} -y --etcd-upgrade=false"
-  when: "master == inventory_hostname"
-
-- name: Create script for waiting for primary master
+- name: Create script for waiting for master
   local_action: "template src=wait-for-single-master.sh.j2 dest=/tmp/wait-for-master-{{ inventory_hostname }}.sh mode=0755"
   when: "master == inventory_hostname"
 
-- name: Wait for primary master
+- name: Wait for master
   script: "/tmp/wait-for-master-{{ inventory_hostname }}.sh"
-  when: "master == inventory_hostname"
-
-- name: Start up keepalived on master
-  service: name=keepalived state=restarted
   when: "master == inventory_hostname"
 

@@ -7,8 +7,13 @@ api:
   advertiseAddress: {{ ansible_default_ipv4.address }}
 apiServerCertSANs:
 - 127.0.0.1
-- {{ ansible_default_ipv4.address }}
 - {{ MASTER_VIP }}
+{% for host in groups['masters'] %}
+- {{ hostvars[host]['ansible_fqdn'] }}
+{% endfor %}
+{% for host in groups['masters'] %}
+- {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+{% endfor %}
 etcd:
   endpoints:
 {% for host in groups['etcd'] %}

@@ -1,0 +1,9 @@
+#
+# Sets up network using flannel plugin.
+#
+---
+
+- name: Generate 'flannel' network plugin yaml
+  local_action: "shell wget -O /tmp/net.yaml '{{ FLANNEL_YAML_URL }}'"
+  args:
+    warn: no

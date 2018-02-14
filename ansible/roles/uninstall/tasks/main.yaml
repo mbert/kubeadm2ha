@@ -29,6 +29,18 @@
   file: path=/var/lib/etcd/default.etcd state=absent
   when: "'masters' in group_names"
 
+- name: Clean up /var/lib/cni on all masters
+  file: path=/var/lib/cni state=absent
+  when: "'masters' in group_names"
+
+- name: Clean up /var/lib/kubelet on all masters
+  file: path=/var/lib/kubelet state=absent
+  when: "'masters' in group_names"
+
+- name: Re-create /var/lib/kubelet on all masters
+  file: path=/var/lib/kubelet state=directory mode=0755
+  when: "'masters' in group_names"
+
 - name: Clean up etcd certificates on all masters
   file: path=/etc/etcd/pki state=absent
   when: "'masters' in group_names"

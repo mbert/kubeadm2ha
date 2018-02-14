@@ -1,0 +1,13 @@
+#
+# Sets up network using weavenet plugin.
+#
+---
+
+- name: Get kubectl version for generating network plugin yaml
+  shell: kubectl version | base64 | tr -d '\n'
+  register: KUBECTL_VERSION
+
+- name: Generate 'weavenet' network plugin yaml
+  local_action: shell wget -O /tmp/net.yaml "{{ WEAVENET_YAML_URL_PREFIX }}{{ KUBECTL_VERSION.stdout }}"
+  args:
+    warn: no

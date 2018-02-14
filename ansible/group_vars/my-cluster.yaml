@@ -1,8 +1,8 @@
 
 #
-# Variables for the 'md-kubernetes' environment
+# Variables for the 'my-cluster' environment
 #
 --- 
-CLUSTER_NAME: md-kubernetes
+CLUSTER_NAME: my-cluster
 MASTER_VIP: 192.168.0.50
 NETWORK_PLUGIN: flannel
