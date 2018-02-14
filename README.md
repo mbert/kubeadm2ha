@@ -129,7 +129,7 @@ If the upgrade fails the situation afterwards depends on the phase in which thin
 
 If _kubeadm_ failed to upgrade the cluster it will try to perform a rollback. Hence if that happened on the first master, chances are pretty good that the cluster is still intact. In that case all you need is to start _docker_, _kubelet_ and _keepalived_ on the secondary masters and then uncordon them (`kubectl uncordon <secondary-master-fqdn>`) to be back where you started from.
 
-If _kubeadm_ on one of the secondary masters failed you still have a working, upgraded cluster, but without the secondary masters in a somewhat undefined condition. You will have to find out what went wrong and join the secondaries manually. Once this has succeeded, finish the automatic upgrade process by processing the second half of the playbook only:
+If _kubeadm_ on one of the secondary masters failed you still have a working, upgraded cluster, but without the secondary masters in a somewhat undefined condition. In some cases _kubeadm_ fails if the cluster is still busy after having upgraded the previous master node, so that waiting a bit and running `kubeadm upgrade apply v<VERSION>` may even succeed. Otherwise you will have to find out what went wrong and join the secondaries manually. Once this has been done, finish the automatic upgrade process by processing the second half of the playbook only:
 
     ansible-playbook -f <good-number-of-concurrent-processes> -i <your-environment>.inventory cluster-upgrade.yaml --tags nodes
 

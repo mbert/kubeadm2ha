@@ -18,14 +18,15 @@ kubectl get configmap -n kube-system kubeadm-config -o yaml | grep -q 'nodeName:
 /tmp/kubeadm-{{ KUBERNETES_VERSION }} upgrade plan || errorExit "Error, /tmp/kubeadm-{{ KUBERNETES_VERSION }} upgrade plan was not successful."
 
 SLEEP_TIME=30
-for i in 1 2 3; do
+MAX_IT=5
+for i in `seq 1 $MAX_IT`; do
 	if /tmp/kubeadm-{{ KUBERNETES_VERSION }} upgrade apply v{{ KUBERNETES_VERSION }} -y --etcd-upgrade=false; then
 		exit 0
-	elif [ "$i" -lt 3 ]; then
+	elif [ "$i" -lt $MAX_IT ]; then
 		echo "Upgrade was unsuccessful, waiting 30s and retrying."
 		sleep ${SLEEP_TIME}s
 		SLEEP_TIME=`expr $SLEEP_TIME \* 2`
 	fi
 done
 
-errorExit "Upgrade was unsuccessful after 3 attempts. Giving up."
+errorExit "Upgrade was unsuccessful after ${MAX_IT} attempts. Giving up."
