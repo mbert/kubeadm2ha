@@ -2,8 +2,6 @@
 # Set up minion
 #
 ---
-- name: Enable kubelet
-  service: name=kubelet enabled=yes
 
 - name: Copy join script (fetched in 'join-token' role)
   copy: src=/tmp/join-worker-node.sh dest=/root/join-worker-node.sh owner=root group=root mode=0755

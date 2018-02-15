@@ -20,6 +20,10 @@
   #systemd: daemon-reload=yes
   command: systemctl daemon-reload
 
+- name: Enable kubelet
+  service: name=kubelet enabled=yes
+
 - name: Create setup directory 
   file: path=/root/setup state=directory
   when: "'primary-master' in group_names"
+
