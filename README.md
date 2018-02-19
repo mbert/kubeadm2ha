@@ -11,7 +11,7 @@ This repository contains a set of ansible scripts to do this. There are three pl
 1. _cluster-setup.yaml_ sets up a complete cluster including the HA setup. See below for more details.
 2. _cluster-load-balanced.yaml_ sets up an NGINX load balancer for the apiserver.
 3. _cluster-uninstall.yaml_ removes data and configuration files to a point that _cluster-setup.yaml_ can be used again.
-4. _cluster-dashboard.yaml_ sets up the dashboard including influxdb/grafana. This setup is insecure (no SSL).
+4. _cluster-dashboard.yaml_ sets up the dashboard including influxdb/grafana.
 5. _etcd-operator.yaml_ sets up the etcd-operator.
 6. _cluster-images.yaml_ prefetches all images needed for Kubernetes operations and transfers them to the target hosts.
 7. _local-access.yaml_ fetches a patched _admin.conf_ file to _/tmp/MY-CLUSTER-NAME-admin.conf_. After copying it to _~/.kube/config_ remote _kubectl_ access via V-IP / load balancer can be tested. 
@@ -49,6 +49,40 @@ In order to use the ansible scripts, at least two files need to be configured:
 2. Export the images to tar files.
 3. Copy the tar files over to the target hosts.
 4. Import the images from the tar files on the target hosts.
+
+## Setting up the dashboard
+
+The _cluster-dashboard.yaml_ playbook does the following:
+
+1. Install the _influxdb_, _grafana_ and _dashboard_ components.
+2. Scale the number of instances to the number of master nodes.
+3. Expose the instances via _NodePort_, so that they can then be accessed through the V-IP.
+4. Sets up a service account 'admin-user' and cluster role binding for the role 'cluster-admin' so that the dashboard can be accessed with root-like privileges.
+
+For accessing the dashbord in this configuration there are two options:
+
+1. Use [https://<YOUR-CLUSTER-VIP>:30443](https://<YOUR-CLUSTER-VIP>:30443) - i.e. connect to the remote IP. You will get a certificat warning though because the cluster's certificates will be unknown to your browser.
+2. Run `kubectl proxy` on your local host (which requires to have configured `kubectl` for your local host, see _Configuring local access_ below for automating this), then access via [http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/)
+
+The dashboard will ask you to authenticate. Again, there are several options:
+
+1. Use the token of an existing service account with sufficient privileges. On many clusters this command works for root-like access:
+
+    ```
+    kubectl -n kube-system describe secrets `kubectl -n kube-system get secrets | awk '/clusterrole-aggregation-controller/ {print $1}'` | awk '/token:/ {print $2}'
+    ```
+
+2. Use the token of the 'admin-user' service account (if it exists):
+
+    ```
+    kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+    ```
+
+3. Use the _local-access.yaml_ playbook to generate a configuration file. That file can be copied to _~/.kube/config_ for local `kubectl` access. It can also be uploaded as _kubeconfig_ file in the dashboard's login dialogue.
+
+## Configuring local access
+
+Running the _local-access.yaml_ playbook creates a file _/tmp/<my-cluster-name>-admin.conf_ that can be used as _~/.kube/config_. If the dashboard has been installed (see above) the file will contain the 'admin-user' service account's token, so that for both `kubectl` and the dashboard root-like access is possible. If that service account does not exist, the client-side certificate will be used instead which is OK for testing environments but is generally considered not recommendable because the client-side certificates are not supposed to leave their master host.
 
 ## Upgrading a cluster
 

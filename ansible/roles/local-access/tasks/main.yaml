@@ -3,8 +3,11 @@
 #
 ---
 
-- name: Create admin.conf file for access via VIP
-  shell: "perl -p -e 's|server: *https://.*:6443|server: https://{{ MASTER_VIP }}:8443|g' /etc/kubernetes/admin.conf >/tmp/admin.conf"
+- name: Create admin.conf file for local kubectl or dashboard access
+  script: "create-kubeconfig.sh"
 
 - name: Fetch patched admin.conf
   fetch: src=/tmp/admin.conf dest=/tmp/{{ CLUSTER_NAME }}-admin.conf flat=yes
+
+- name: Done
+  debug: msg="The kubeconfig file was saved to '/tmp/{{ CLUSTER_NAME }}-admin.conf'. You can copy it to ~/.kube/config or use for access to the dashboard."

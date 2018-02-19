@@ -16,12 +16,12 @@
   when: "'masters' in group_names"
 
 - name: Get the dashboard yaml
-  local_action: shell wget -O /tmp/kubernetes-dashboard.yaml https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/alternative/kubernetes-dashboard.yaml
+  local_action: shell wget -O /tmp/kubernetes-dashboard.yaml https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
   args:
     warn: no
 
 - name: Edit the dashboard yaml
-  local_action: "command perl -pi -e 's/    targetPort: 9090/    targetPort: 9090\\n    nodePort: 30990\\n  type: NodePort/m' /tmp/kubernetes-dashboard.yaml"
+  local_action: "command perl -pi -e 's/      targetPort: 8443/      targetPort: 8443\\n      nodePort: 30443\\n  type: NodePort/m' /tmp/kubernetes-dashboard.yaml"
   when: "not HAS_LB"
 
 - name: clone heapster git to /tmp
@@ -37,8 +37,8 @@
 - name: Copy dashboard yaml
   copy: src=/tmp/kubernetes-dashboard.yaml dest=/root/setup/dashboard/kubernetes-dashboard.yaml owner=root group=root mode=0644
 
-- name: Copy dashboard-admin yaml
-  copy: src=dashboard-admin.yaml dest=/root/setup/dashboard/dashboard-admin.yaml owner=root group=root mode=0644
+- name: Copy dashboard-serviceaccount.yaml
+  copy: src=dashboard-admin.yaml dest=/root/setup/dashboard/dashboard-serviceaccount.yaml owner=root group=root mode=0644
 
 - name: Copy dashboard-admin yaml
   copy: src=dashboard-admin.yaml dest=/root/setup/dashboard/dashboard-admin.yaml owner=root group=root mode=0644
@@ -48,6 +48,9 @@
 
 - name: Install dashboard
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/setup/dashboard/kubernetes-dashboard.yaml
+
+- name: Install dashboard-serviceaccount
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/setup/dashboard/dashboard-serviceaccount.yaml
 
 - name: Install dashboard-admin
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/setup/dashboard/dashboard-admin.yaml
