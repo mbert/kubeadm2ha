@@ -58,11 +58,11 @@
 - name: Generate script for generating peer certs
   template: src=gen-peer-certs-fix-perms.sh.j2 dest=/tmp/gen-peer-certs-fix-perms.sh mode=0755
 
-- name: Generate peer certs
-  command: /tmp/gen-peer-certs-fix-perms.sh
-
 - name: Install etcd via package manager
   package: name=etcd-{{ ETCD_VERSION }} state=present
+
+- name: Generate peer certs
+  command: /tmp/gen-peer-certs-fix-perms.sh
 
 - name: Create an archive from the certificate files for the masters
   archive: path=/etc/etcd/pki/ca.pem,/etc/etcd/pki/client.pem,/etc/etcd/pki/client-key.pem dest=/tmp/pki-pems.tar.gz
