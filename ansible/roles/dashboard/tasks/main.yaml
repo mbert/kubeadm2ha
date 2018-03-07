@@ -38,7 +38,7 @@
   copy: src=/tmp/kubernetes-dashboard.yaml dest=/root/setup/dashboard/kubernetes-dashboard.yaml owner=root group=root mode=0644
 
 - name: Copy dashboard-serviceaccount.yaml
-  copy: src=dashboard-admin.yaml dest=/root/setup/dashboard/dashboard-serviceaccount.yaml owner=root group=root mode=0644
+  copy: src=dashboard-serviceaccount.yaml dest=/root/setup/dashboard/dashboard-serviceaccount.yaml owner=root group=root mode=0644
 
 - name: Copy dashboard-admin yaml
   copy: src=dashboard-admin.yaml dest=/root/setup/dashboard/dashboard-admin.yaml owner=root group=root mode=0644
