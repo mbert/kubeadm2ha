@@ -46,6 +46,9 @@
 - name: Copy heapster
   synchronize: src=/tmp/heapster dest=/root/setup/dashboard/
 
+- name: Add nodeSelector for mine/role=worker to dashboard, influxdb, heapster and grafana
+  shell: "perl -pi -e 's|^( +)containers:|$1nodeSelector:\\n$1  mine/role: worker\\n$1containers:|m' /root/setup/dashboard/kubernetes-dashboard.yaml /root/setup/dashboard/heapster/deploy/kube-config/influxdb/*.yaml /root/setup/dashboard/heapster/deploy/kube-config/rbac/heapster-rbac.yaml"
+
 - name: Install dashboard
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/setup/dashboard/kubernetes-dashboard.yaml
 

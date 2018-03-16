@@ -57,6 +57,7 @@
   - {role: join-token,         when: "'primary-master'    in group_names" }
   - {role: minions,            when: "'minions'           in group_names" }
   - {role: enable-scheduling,  when: "'primary-master'    in group_names" }
+  - {role: label-minions,      when: "'primary-master'    in group_names" }
   tags:
   - minions
 
