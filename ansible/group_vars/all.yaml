@@ -31,7 +31,7 @@ CERT_STATE: "Hamburg"
 CERT_ORG_UNIT: "Deployment"
 
 # Software versions (used by installation via package manager)
-KUBERNETES_VERSION: "1.9.3"
+KUBERNETES_VERSION: "1.10.0"
 KUBERNETES_DNS_VERSION: "1.14.7"
 KUBERNETES_CNI_VERSION: "0.6.0"
 ETCD_VERSION: "3.2.7"
