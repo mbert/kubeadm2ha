@@ -16,7 +16,13 @@
     loop_var: worker
 
 - name: Label elasticsearch nodes as "elasticsearch"
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes {{ hostvars[esnode]['ansible_fqdn'] }} mine/role=\"elasticsearch\""
-  with_items: "{{ groups['elasticsearch'] }}"
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes {{ hostvars[eshnode]['ansible_fqdn'] }} mine/role=\"elasticsearch-hot\""
+  with_items: "{{ groups['elasticsearch-hot'] }}"
   loop_control:
-    loop_var: esnode
+    loop_var: eshnode
+
+- name: Label elasticsearch nodes as "elasticsearch"
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes {{ hostvars[eswnode]['ansible_fqdn'] }} mine/role=\"elasticsearch-warm\""
+  with_items: "{{ groups['elasticsearch-warm'] }}"
+  loop_control:
+    loop_var: eswnode
