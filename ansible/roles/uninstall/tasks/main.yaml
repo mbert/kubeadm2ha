@@ -40,6 +40,7 @@
 
 - name: Delete cni0 network device
   command: "ip link delete cni0"
+  ignore_errors: yes
 
 - name: Clean up etcd certificates on all masters
   file: path=/etc/etcd/pki state=absent
