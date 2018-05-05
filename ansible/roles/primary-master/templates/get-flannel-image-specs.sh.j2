@@ -5,8 +5,8 @@ errorExit() {
 	exit 1
 }
 
-wget -O /tmp/flannel.yaml '{{ FLANNEL_YAML_URL }}'
+wget -q -O /tmp/flannel.yaml '{{ FLANNEL_YAML_URL }}'
 
-egrep '^[ \t]*image:' /tmp/flannel.yaml  | sed 's/.*image: *//'
+egrep '^[ \t]*image:' /tmp/flannel.yaml  | sed 's/.*image: *//' | sort -u
 
 rm -f /tmp/flannel.yaml

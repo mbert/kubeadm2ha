@@ -22,8 +22,16 @@
   - name: Register names and versions of images to pull
     local_action: command "/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh"
     register: NETWORK_PLUGIN_IMAGE_SPECS_RESULT
-  roles:
-  - fetch-images
+  tasks:
+  - name: Make sure that docker is installed on the local host
+    local_action: "shell which docker"
+    run_once: true
+  - name: Generate script for pulling and saving images
+    local_action: "template src=pull-and-save.sh.j2 dest=/tmp/pull-and-save.sh mode=0755"
+    run_once: true
+  - name: Run script for pulling and saving images
+    local_action: "command /tmp/pull-and-save.sh {{ NETWORK_PLUGIN }}"
+    run_once: true
   tags:
   - fetch-images
 

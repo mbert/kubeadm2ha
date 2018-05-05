@@ -5,8 +5,8 @@ errorExit() {
 	exit 1
 }
 
-wget -O /tmp/weavenet.yaml "{{ WEAVENET_YAML_URL_PREFIX }}{{ KUBECTL_VERSION.stdout }}"
+wget -q -O /tmp/weavenet.yaml "{{ WEAVENET_YAML_URL_PREFIX }}{{ KUBECTL_VERSION.stdout }}"
 
-egrep '^[ \t]*image:' /tmp/weavenet.yaml  | sed 's/.*image: *//'
+egrep '^[ \t]*image:' /tmp/weavenet.yaml  | sed 's/.*image: *//' | sort -u
 
 rm -f /tmp/weavenet.yaml

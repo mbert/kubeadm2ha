@@ -1,0 +1,28 @@
+#!/bin/sh
+
+errorExit() {
+	echo "*** $*" 1>&2
+	exit 1
+}
+
+test -n "$1" || errorExit "Usage: $0 <network-plugin-name>"
+test -r /tmp/get-${1}-image-specs.sh || errorExit "Error, script for getting the network plugin image specs '/tmp/get-${1}-image-specs.sh' not found."
+
+BASE_IMAGES="{% for image in DOCKER_IMAGES %}{{ image.name }}:{{ image.tag }} {% endfor %}"
+NETWORK_IMAGES=`sh /tmp/get-${1}-image-specs.sh`
+IMAGES="$BASE_IMAGES $NETWORK_IMAGES"
+
+echo "Images to pull and save: "$IMAGES
+
+for image in $IMAGES; do
+	CMD="docker pull $image"
+	echo "$CMD"
+	$CMD || errorExit "Error pulling image '$image'"
+done
+
+for image in $IMAGES; do
+	CMD="/usr/bin/docker save -o /tmp/`echo $image | tr -d '\n' | sha256sum | awk '{ print $1 }'`.tar $image"
+	echo "$CMD"
+	$CMD || errorExit "Error saving image '$image'."
+done
+
