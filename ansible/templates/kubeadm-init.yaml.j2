@@ -23,4 +23,4 @@ etcd:
   certFile: /etc/kubernetes/pki/etcd/client.pem
   keyFile: /etc/kubernetes/pki/etcd/client-key.pem
 apiServerExtraArgs:
-  {% if KUBERNETES_VERSION | match('^1\.8') %}apiserver-count: "{{ groups['masters'] | length }}"{% else %}endpoint-reconciler-type: "lease"{% endif %}
+  endpoint-reconciler-type: "lease"
