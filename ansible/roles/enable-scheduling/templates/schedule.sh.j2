@@ -4,5 +4,5 @@ KUBECONFIG=/etc/kubernetes/admin.conf
 export KUBECONFIG
 
 {% for host in groups['masters'] %}
-kubectl uncordon {{ hostvars[host]['ansible_fqdn'] }} || exit 1
+kubectl uncordon {{ hostvars[host]['ansible_hostname'] }} || exit 1
 {% endfor %}

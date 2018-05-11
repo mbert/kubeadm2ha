@@ -38,3 +38,16 @@
   shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl delete pod -n kube-system -l k8s-app=kube-proxy"
   when: "'primary-master' in group_names"
 
+- name: Edit /etc/kubernetes/kubelet.conf to use the virtual IP instead of the host IP
+  command: "perl -pi -e 's|server: *https://.*:6443|server: https://{{ MASTER_VIP }}:6443|' /etc/kubernetes/kubelet.conf /etc/kubernetes/scheduler.conf /etc/kubernetes/controller-manager.conf"
+
+- name: Restart kubelet on all nodes
+  service: name="kubelet" enabled="yes" state="restarted"
+
+- name: Force restart of all controller manager pods
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl delete pod -n kube-system -l component=kube-controller-manager"
+  when: "'primary-master' in group_names"
+
+- name: Force restart of all scheduler pods
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl delete pod -n kube-system -l component=kube-scheduler"
+  when: "'primary-master' in group_names"

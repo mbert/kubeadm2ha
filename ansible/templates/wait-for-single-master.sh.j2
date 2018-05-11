@@ -18,10 +18,10 @@ while [ "$READY" != "true" ]; do
 		N=`expr $N + ${INCREMENT_SECONDS}`
 	fi
 
-	if kubectl get nodes | egrep -q "^{{ hostvars[master]['ansible_fqdn'] }}[ \t]*Ready"; then
-		echo "Node {{ hostvars[master]['ansible_fqdn'] }} is ready."
+	if kubectl get nodes | egrep -q "^{{ hostvars[master]['ansible_hostname'] }}[ \t]*Ready"; then
+		echo "Node {{ hostvars[master]['ansible_hostname'] }} is ready."
 	else
-		echo "Node {{ hostvars[master]['ansible_fqdn'] }} is not yet ready."
+		echo "Node {{ hostvars[master]['ansible_hostname'] }} is not yet ready."
 		READY=false
 	fi
 

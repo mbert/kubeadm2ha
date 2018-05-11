@@ -3,26 +3,42 @@
 #
 --- 
 
+- name: Create script for waiting for masters
+  template: src="wait-for-masters.sh.j2" dest="/tmp/wait-for-masters.sh" mode=0755
+  when: "'primary-master' in group_names"
+
+- name: Create script for waiting for minions
+  template: src="wait-for-minions.sh.j2" dest="/tmp/wait-for-minions.sh" mode=0755
+  when: "'primary-master' in group_names"
+
+- name: Wait for masters
+  command: "sh /tmp/wait-for-masters.sh"
+  when: "'primary-master' in group_names"
+
+- name: Wait for minions
+  command: "sh /tmp/wait-for-minions.sh"
+  when: "'primary-master' in group_names"
+
 - name: Enable fluentd on minions
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[minion]['ansible_fqdn'] }} beta.kubernetes.io/fluentd-ds-ready=\"true\""
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[minion]['ansible_hostname'] }} beta.kubernetes.io/fluentd-ds-ready=\"true\""
   with_items: "{{ groups['minions'] }}"
   loop_control:
     loop_var: minion
 
 - name: Label worker nodes as "worker"
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[worker]['ansible_fqdn'] }} mine/role=\"worker\""
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[worker]['ansible_hostname'] }} mine/role=\"worker\""
   with_items: "{{ groups['workers'] }}"
   loop_control:
     loop_var: worker
 
 - name: Label elasticsearch nodes as "elasticsearch"
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[eshnode]['ansible_fqdn'] }} mine/role=\"elasticsearch-hot\""
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[eshnode]['ansible_hostname'] }} mine/role=\"elasticsearch-hot\""
   with_items: "{{ groups['elasticsearch-hot'] }}"
   loop_control:
     loop_var: eshnode
 
 - name: Label elasticsearch nodes as "elasticsearch"
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[eswnode]['ansible_fqdn'] }} mine/role=\"elasticsearch-warm\""
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[eswnode]['ansible_hostname'] }} mine/role=\"elasticsearch-warm\""
   with_items: "{{ groups['elasticsearch-warm'] }}"
   loop_control:
     loop_var: eswnode

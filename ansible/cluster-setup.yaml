@@ -2,7 +2,6 @@
 # Playbook to set up a Kubernetes cluster.
 #
 --- 
-
 - name: Deploy etcd
   hosts: etcd
   remote_user: root
@@ -43,8 +42,7 @@
   - {role: primary-master,     when: "'primary-master'    in group_names" }
   - {role: secondary-masters,  when: "'secondary-masters' in group_names" }
   - {role: network-plugin,     when: "'primary-master'    in group_names" }
-  - {role: ha-settings,        when: "'primary-master'    in group_names" }
-  - {role: kubelet-ha,         when: "'masters'           in group_names" }
+  - {role: ha-settings,        when: "'masters'           in group_names" }
   tags:
   - masters
 
@@ -58,19 +56,8 @@
   - {role: join-token,         when: "'primary-master'    in group_names" }
   - {role: minions,            when: "'minions'           in group_names" }
   - {role: enable-scheduling,  when: "'primary-master'    in group_names" }
-  - {role: kubelet-ha,         when: "'minions'           in group_names" }
   tags:
   - minions
-
-- name: Label minions
-  hosts: nodes
-  remote_user: root
-  gather_facts: no
-  any_errors_fatal: yes
-  roles:
-  - {role: label-minions,      when: "'primary-master'    in group_names" }
-  tags:
-  - label
 
 - name: Label minions
   hosts: nodes

@@ -4,7 +4,7 @@ kubernetesVersion: v{{ KUBERNETES_VERSION }}
 networking:
   podSubnet: {{ POD_NETWORK_CIDR }}
 api:
-  advertiseAddress: {{ ansible_default_ipv4.address }}
+  advertiseAddress: {{ MASTER_VIP }}
 apiServerCertSANs:
 - 127.0.0.1
 - {{ MASTER_VIP }}

@@ -9,11 +9,11 @@ export KUBECONFIG=/etc/kubernetes/admin.conf
 
 kubectl get configmap -n kube-system kubeadm-config -o yaml >/tmp/kubeadm-config-cm.yaml || errorExit "Error getting configmap/kubeadm-config"
 
-sed -i 's/^\([ \t]*nodeName:\).*/\1 {{ hostvars[master]['ansible_fqdn'] }}/' /tmp/kubeadm-config-cm.yaml
+sed -i 's/^\([ \t]*nodeName:\).*/\1 {{ hostvars[master]['ansible_hostname'] }}/' /tmp/kubeadm-config-cm.yaml
 
 kubectl apply -f /tmp/kubeadm-config-cm.yaml --force || errorExit "Error applying /tmp/kubeadm-config-cm.yaml"
 
-kubectl get configmap -n kube-system kubeadm-config -o yaml | grep -q 'nodeName: {{ hostvars[master]['ansible_fqdn'] }}' || errorExit "Change to configmap/kubeadm-config was not applied successfully."
+kubectl get configmap -n kube-system kubeadm-config -o yaml | grep -q 'nodeName: {{ hostvars[master]['ansible_hostname'] }}' || errorExit "Change to configmap/kubeadm-config was not applied successfully."
 
 /tmp/kubeadm-{{ KUBERNETES_VERSION }} upgrade plan || errorExit "Error, /tmp/kubeadm-{{ KUBERNETES_VERSION }} upgrade plan was not successful."
 
