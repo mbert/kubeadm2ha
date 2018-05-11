@@ -12,8 +12,19 @@
   - kubeadm-{{ KUBERNETES_VERSION }}
   - kubernetes-cni-{{ KUBERNETES_CNI_VERSION }}
 
-- name: Set cgroups driver to 'cgroupfs' 
-  command: "perl -pi -e 's/--cgroup-driver=systemd/--cgroup-driver=cgroupfs/g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf"
+#- name: Set cgroups driver to 'cgroupfs' 
+#  command: "perl -pi -e 's/--cgroup-driver=systemd/--cgroup-driver=cgroupfs/g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf"
+  
+- name: Determine docker's cgroup driver and update kubelet accordinlgy
+  shell: docker info 2>&1 | grep "Cgroup Driver" | cut -d" " -f3
+  register: cgroups_driver
+  changed_when: false
+
+- name: Use docker's cgroup driver and update kubelet accordinlgy
+  replace:
+    path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    regexp: '^(.*--cgroup-driver=)(systemd|cgroupfs)(.*)$'
+    replace: '\1{{ cgroups_driver.stdout_lines[0] }}\3'
 
 - name: Reload systemd units
   # Fixme: 2.3.1.0 wants a 'name' argument here which is of course nonsense
