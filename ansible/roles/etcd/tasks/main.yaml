@@ -3,8 +3,7 @@
 #
 ---
 - name: Get cfssl
-  local_action: command "wget --continue -O /tmp/cfssl https://pkg.cfssl.org/R1.2/cfssl_linux-{{ HOST_ARCH }}"
-                creates="/tmp/cfssl"
+  local_action: command "wget --continue -O /tmp/cfssl https://pkg.cfssl.org/R1.2/cfssl_linux-{{ HOST_ARCH }}" creates="/tmp/cfssl"
   run_once: true
   args:
     warn: no
@@ -13,8 +12,7 @@
   copy: src=/tmp/cfssl dest=/tmp/cfssl mode=0755
 
 - name: Get cfssljson
-  local_action: command "wget --continue -O /tmp/cfssljson https://pkg.cfssl.org/R1.2/cfssljson_linux-{{ HOST_ARCH }}"
-                creates="/tmp/cfssljson"
+  local_action: command "wget --continue -O /tmp/cfssljson https://pkg.cfssl.org/R1.2/cfssljson_linux-{{ HOST_ARCH }}" creates="/tmp/cfssljson"
   run_once: true
   args:
     warn: no

@@ -27,7 +27,7 @@
   when: "'primary-master' in group_names"
 
 - name: Edit current kube-proxy settings to use the virtual IP instead of the host IP
-  command: "perl -pi -e 's|server: *https://.*:6443|server: https://{{ MASTER_VIP }}:6443|' /tmp/kube-proxy-cm.yaml"
+  replace: "regexp='server: *https://.*:6443' replace='server: https://{{ MASTER_VIP }}:6443' path='/tmp/kube-proxy-cm.yaml'"
   when: "'primary-master' in group_names"
 
 - name: Apply edited kube-proxy settings
@@ -39,7 +39,11 @@
   when: "'primary-master' in group_names"
 
 - name: Edit /etc/kubernetes/kubelet.conf to use the virtual IP instead of the host IP
-  command: "perl -pi -e 's|server: *https://.*:6443|server: https://{{ MASTER_VIP }}:6443|' /etc/kubernetes/kubelet.conf /etc/kubernetes/scheduler.conf /etc/kubernetes/controller-manager.conf"
+  replace: "regexp='server: *https://.*:6443' replace='server: https://{{ MASTER_VIP }}:6443' path='{{ item }}'"
+  with_items:
+  - /etc/kubernetes/kubelet.conf
+  - /etc/kubernetes/scheduler.conf
+  - /etc/kubernetes/controller-manager.conf
 
 - name: Restart kubelet on all nodes
   service: name="kubelet" enabled="yes" state="restarted"

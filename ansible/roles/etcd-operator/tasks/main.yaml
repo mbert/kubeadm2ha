@@ -11,7 +11,7 @@
   unarchive: copy=yes src=/tmp/etcd-operator.zip dest=/root/setup
 
 - name: Add nodeSelector for mine/role=worker
-  command: "perl -pi -e 's|^( +)containers:|$1nodeSelector:\\n$1  mine/role: worker\\n$1containers:|m' /root/setup/etcd-operator-master/example/deployment.yaml"
+  replace: "regexp='^( +)containers:' replace='\\1nodeSelector:\\n\\1  mine/role: worker\\n\\1containers:' path='/root/setup/etcd-operator-master/example/deployment.yaml'"
 
 - name: Install etcd-operator
   shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; cd /root/setup/etcd-operator-master && example/rbac/create_role.sh && kubectl create -f example/deployment.yaml"
