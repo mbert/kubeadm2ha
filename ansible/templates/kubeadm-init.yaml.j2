@@ -5,6 +5,7 @@ networking:
   podSubnet: {{ POD_NETWORK_CIDR }}
 api:
   advertiseAddress: {{ MASTER_VIP }}
+  controlPlaneEndpoint: {{ MASTER_VIP }}
 apiServerCertSANs:
 - 127.0.0.1
 - {{ MASTER_VIP }}
