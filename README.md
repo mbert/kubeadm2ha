@@ -39,7 +39,8 @@ In order to use the ansible scripts, at least two files need to be configured:
 6. Use _kubeadm_ to join all hosts in the group _minions_. 
 
 ## What the additional playbooks can be used for:
-- Add an NGINX-based load-balancer to the cluster. After this, the apiserver will be available through the virtual-IP on port 8443. Note that this is a round-robin load balancer that will interfere with _watch_ actions, like `kubectl logs -f` from a remote host (see #4).
+- Add an NGINX-based load-balancer to the cluster. After this, the apiserver will be available through the virtual-IP on port 8443. Note that this is will interfere with _watch_ actions, like `kubectl log s -f` from a remote host (as a workaround you can still use port 6443 for remote a
+ccess via `kubectl`, also see #4).
 - Add etcd-operator for use with applications running in the cluster. This is an add-on purely because I happen to need it.
 - Pre-fetch and transfer Kubernetes images. This is useful for systems without Internet access.
 

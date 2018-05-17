@@ -3,14 +3,11 @@
 #
 ---
 
-- name: Install nginx via package manager
-  package: name=nginx-{{ NGINX_VERSION }} state=present
-
 - name: Generate configuraton file
   template: src=nginx.conf.j2 dest=/etc/nginx/nginx.conf
 
-- name: Enable and start nginx
-  service: name=nginx enabled=yes state=restarted
+- name: Generate configuraton file
+  template: src=nginx.yaml.j2 dest=/etc/kubernetes/manifests/nginx.yaml
 
 - name: Get current kube-proxy settings
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl get -n kube-system configmap/kube-proxy -o yaml >/tmp/kube-proxy-cm.yaml
