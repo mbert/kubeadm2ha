@@ -11,7 +11,7 @@ events {
 stream {
 
     upstream apiserver {
-        hash $remote_addr;
+        hash $remote_addr consistent;
 {% for host in groups['masters'] %}
         server {{ hostvars[host]['ansible_default_ipv4']['address'] }}:6443 weight=5 max_fails=3 fail_timeout=30s;
 {% endfor %}
