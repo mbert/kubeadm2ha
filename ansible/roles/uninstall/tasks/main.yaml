@@ -7,10 +7,6 @@
 #
 --- 
 
-- name: Stop and disable nginx load balancer
-  service: name=nginx enabled=false state=stopped
-  when: "'masters' in group_names"
-
 - name: Stop and disable keepalived cluster
   service: name=keepalived enabled=false state=stopped
   when: "'masters' in group_names"
@@ -48,6 +44,10 @@
 
 - name: Clean up etcd certificates on all masters
   file: path=/etc/kubernetes/pki state=absent
+  when: "'masters' in group_names"
+
+- name: Clean up /etc/kubernetes/manifests directory
+  file: path=/etc/kubernetes/manifests state=absent
   when: "'masters' in group_names"
 
 - name: Reboot machine
