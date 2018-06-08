@@ -3,6 +3,9 @@ kind: MasterConfiguration
 kubernetesVersion: v{{ KUBERNETES_VERSION }}
 networking:
   podSubnet: {{ POD_NETWORK_CIDR }}
+apiServerCertSANs:
+- {{ MASTER_VIP }}
+- {{ ansible_default_ipv4.address }}
 api:
   advertiseAddress: {{ MASTER_VIP }}
   controlPlaneEndpoint: {{ MASTER_VIP }}
