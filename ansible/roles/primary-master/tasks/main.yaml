@@ -6,11 +6,19 @@
 - name: Generate 'kubeadm' configuration file
   template: src=kubeadm-init.yaml.j2 dest=/root/kubeadm-init.yaml
 
-- name: Run 'kubeadm'
+- name: Remove /etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf on primary master
+  file: "path=/etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf state=absent"
+
+- name: Run 'kubeadm' if this master node is also an etcd node (need to ignore two preflight errors here)
+  command: kubeadm init --ignore-preflight-errors=FileAvailable--etc-kubernetes-manifests-etcd.yaml --ignore-preflight-errors=Port-10250 --config=/root/kubeadm-init.yaml
+  when: "'etcd' in group_names"
+
+- name: Run 'kubeadm' if this master node is not an etcd node (all preflight errors active here)
   command: kubeadm init --config=/root/kubeadm-init.yaml
+  when: "'etcd' not in group_names"
 
 - name: Archive /etc/kubernetes/pki/[cs]a.*
-  archive: path=/etc/kubernetes/pki/[cs]a.* dest=/tmp/master-certs.tar.gz
+  archive: path=/etc/kubernetes/pki/[cs]a.*,/etc/kubernetes/pki/front-proxy-ca.crt,/etc/kubernetes/pki/front-proxy-ca.key dest=/tmp/master-certs.tar.gz
 
 - name: Fetch /tmp/master-certs.tar.gz
   fetch: src=/tmp/master-certs.tar.gz dest=/tmp/ flat=yes

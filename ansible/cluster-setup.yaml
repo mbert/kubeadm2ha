@@ -2,6 +2,16 @@
 # Playbook to set up a Kubernetes cluster.
 #
 --- 
+- name: Prepare Nodes
+  hosts: nodes
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - prepare-nodes
+  tags:
+  - prepare-nodes
+
 - name: Deploy etcd
   hosts: etcd
   remote_user: root
@@ -21,16 +31,6 @@
   - keepalived
   tags:
   - ha
-
-- name: Prepare Nodes
-  hosts: nodes
-  remote_user: root
-  gather_facts: yes
-  any_errors_fatal: yes
-  roles:
-  - prepare-nodes
-  tags:
-  - prepare-nodes
 
 - name: Set up masters
   hosts: masters

@@ -12,7 +12,7 @@
   when: "'masters' in group_names"
 
 - name: Run 'kubeadm reset'
-  command: kubeadm reset
+  shell: "if which kubeadm >/dev/null; then kubeadm reset -f; else /bin/true; fi"
 
 - name: Disable and stop etcd
   service: name=etcd enabled=false state=stopped
@@ -20,9 +20,10 @@
 
 - name: Disable and stop kubelet
   service: name=kubelet enabled=false state=stopped
+  ignore_errors: yes
 
 - name: Clean up /var/lib/etcd.default.etcd on all masters
-  file: path=/var/lib/etcd/default.etcd state=absent
+  file: path=/var/lib/etcd/member state=absent
   when: "'masters' in group_names"
 
 - name: Clean up /var/lib/cni on all nodes

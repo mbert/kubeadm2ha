@@ -3,9 +3,10 @@
 #
 ---
 
-- name: Create cert dir for etcd
-  file: path=/etc/kubernetes/pki/etcd state=directory
+- name: Create cert dir for pki on master nodes
+  file: "path=/etc/kubernetes/pki state=directory"
 
-- name: Unarchive certificate files for the etcd instances
-  unarchive: copy=yes src=/tmp/pki-pems.tar.gz dest=/etc/kubernetes/pki/etcd
+- name: Unarchive certificate files on master nodes
+  unarchive: "copy=yes src=/tmp/etcd-certs.tar.gz dest=/etc/kubernetes/pki"
+
 

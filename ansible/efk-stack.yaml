@@ -1,0 +1,35 @@
+#
+# Playbook to set up EFK stack for logging.
+#
+--- 
+
+- name: Set up Elasticsearch
+  hosts: primary-master
+  remote_user: root
+  gather_facts: no
+  any_errors_fatal: yes
+  roles:
+  - elasticsearch
+  tags:
+  - elasticsearch
+
+- name: Set up Kibana
+  hosts: primary-master
+  remote_user: root
+  gather_facts: no
+  any_errors_fatal: yes
+  roles:
+  - kibana
+  tags:
+  - kibana
+
+- name: Set up Fluentd
+  hosts: primary-master
+  remote_user: root
+  gather_facts: no
+  any_errors_fatal: yes
+  roles:
+  - fluentd
+  tags:
+  - fluentd
+

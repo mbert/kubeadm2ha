@@ -15,17 +15,15 @@
   package: name=rsync state=present
   when: "'masters' in group_names"
 
-- name: Get the dashboard yaml
-  local_action: shell wget -O /tmp/kubernetes-dashboard.yaml https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
-  args:
-    warn: no
+- name: clone dashboard git to /tmp
+  local_action: "script clone-from-github.sh kubernetes dashboard {{ GIT_DASHBOARD_TAG }}"
 
 - name: Edit the dashboard yaml
-  local_action: "replace regexp='      targetPort: 8443' replace='      targetPort: 8443\\n      nodePort: 30443\\n  type: NodePort' path=/tmp/kubernetes-dashboard.yaml"
+  local_action: "replace regexp='      targetPort: 8443' replace='      targetPort: 8443\\n      nodePort: 30443\\n  type: NodePort' path=/tmp/dashboard/src/deploy/recommended/kubernetes-dashboard.yaml"
   when: "not HAS_LB"
 
 - name: clone heapster git to /tmp
-  local_action: "script clone-heapster.sh"
+  local_action: "script clone-from-github.sh kubernetes heapster {{ GIT_HEAPSTER_TAG }}"
 
 - name: Edit grafana yaml
   local_action: "replace regexp='^( *)# *type: *NodePort' replace='\\1type: NodePort' path=/tmp/heapster/deploy/kube-config/influxdb/grafana.yaml"
@@ -35,7 +33,7 @@
   file: path=/root/setup/dashboard state=directory
 
 - name: Copy dashboard yaml
-  copy: src=/tmp/kubernetes-dashboard.yaml dest=/root/setup/dashboard/kubernetes-dashboard.yaml owner=root group=root mode=0644
+  copy: src=/tmp/dashboard/src/deploy/recommended/kubernetes-dashboard.yaml dest=/root/setup/dashboard/kubernetes-dashboard.yaml owner=root group=root mode=0644
 
 - name: Copy dashboard-serviceaccount.yaml
   copy: src=dashboard-serviceaccount.yaml dest=/root/setup/dashboard/dashboard-serviceaccount.yaml owner=root group=root mode=0644

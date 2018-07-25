@@ -2,17 +2,15 @@
 # Set up etcd-operator
 #
 ---
-- name: Get latest etcd-operator release
-  local_action: command wget -O /tmp/etcd-operator.zip https://github.com/coreos/etcd-operator/archive/master.zip
-  args:
-    warn: no
+- name: clone etcd-operator git to /tmp
+  local_action: "script clone-from-github.sh coreos etcd-operator {{ GIT_ETCD_OPERATOR_TAG }}"
 
-- name: Unpack etcd-operator.zip
-  unarchive: copy=yes src=/tmp/etcd-operator.zip dest=/root/setup
+- name: Copy etcd-operator git to primary master
+  synchronize: "src=/tmp/etcd-operator dest=/root/setup/"
 
 - name: Add nodeSelector for mine/role=worker
-  replace: "regexp='^( +)containers:' replace='\\1nodeSelector:\\n\\1  mine/role: worker\\n\\1containers:' path='/root/setup/etcd-operator-master/example/deployment.yaml'"
+  replace: "regexp='^( +)containers:' replace='\\1nodeSelector:\\n\\1  mine/role: worker\\n\\1containers:' path='/root/setup/etcd-operator/example/deployment.yaml'"
 
 - name: Install etcd-operator
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; cd /root/setup/etcd-operator-master && example/rbac/create_role.sh && kubectl create -f example/deployment.yaml"
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; cd /root/setup/etcd-operator && example/rbac/create_role.sh && kubectl create -f example/deployment.yaml"
 

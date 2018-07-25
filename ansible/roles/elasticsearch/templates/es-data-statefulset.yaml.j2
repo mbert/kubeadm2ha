@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elasticsearch-logging-data-{{ ES_NODE_TYPE }}
+  namespace: kube-system
+  labels:
+    k8s-app: elasticsearch-logging
+    role: data
+    version: v6.2.2
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  serviceName: elasticsearch-logging-data
+  replicas: 2
+  selector:
+    matchLabels:
+      k8s-app: elasticsearch-logging
+      role: data
+      version: v6.2.2
+  template:
+    metadata:
+      labels:
+        k8s-app: elasticsearch-logging
+        role: data
+        version: v6.2.2
+        kubernetes.io/cluster-service: "true"
+    spec:
+      serviceAccountName: elasticsearch-logging
+      nodeSelector:
+        mine/role: elasticsearch-{{ ES_NODE_TYPE }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: role
+                  operator: In
+                  values:
+                  - data
+              topologyKey: kubernetes.io/hostname          
+      initContainers:
+      - name: init-sysctl
+        image: busybox:1.27.2
+        command:
+        - sysctl
+        - -w
+        - vm.max_map_count=262144
+        securityContext:
+          privileged: true
+      containers:
+      - name: elasticsearch-logging-data
+        image: quay.io/pires/docker-elasticsearch-kubernetes:6.2.3
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: CLUSTER_NAME
+          value: mylog
+        - name: NODE_MASTER
+          value: "false"
+        - name: NODE_INGEST
+          value: "false"
+        - name: HTTP_ENABLE
+          value: "false"
+        - name: ES_JAVA_OPTS
+          value: -Xms2g -Xmx2g
+        - name: ES_EXTRA_ARGS
+          value: -Enode.attr.box_type={{ ES_NODE_TYPE }}
+        - name: PROCESSORS
+          valueFrom:
+            resourceFieldRef:
+              resource: limits.cpu
+        resources:
+          limits:
+{% if ES_NODE_TYPE == 'warm' %}
+            cpu: {{ ES_WARM_NODES_CPU_LIMIT }}
+            memory: {{ ES_WARM_NODES_MEM_LIMIT }}
+{% else %}
+            cpu: {{ ES_HOT_NODES_CPU_LIMIT }}
+            memory: {{ ES_HOT_NODES_MEM_LIMIT }}
+{% endif %}
+          requests:
+{% if ES_NODE_TYPE == 'warm' %}
+            cpu: {{ ES_WARM_NODES_CPU_REQUEST }}
+            memory: {{ ES_WARM_NODES_MEM_REQUEST }}
+{% else %}
+            cpu: {{ ES_HOT_NODES_CPU_REQUEST }}
+            memory: {{ ES_HOT_NODES_MEM_REQUEST }}
+{% endif %}
+        ports:
+        - containerPort: 9300
+          name: transport
+        livenessProbe:
+          tcpSocket:
+            port: transport
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - name: storage
+          mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: storage
+    spec:
+      accessModes: [ "ReadWriteMany" ]
+      resources:
+        requests:
+          storage: 40Gi
+      selector:
+        matchLabels:
+          application: "my-es-logging"

@@ -1,30 +1,20 @@
-apiVersion: kubeadm.k8s.io/v1alpha1
+apiVersion: kubeadm.k8s.io/v1alpha2
 kind: MasterConfiguration
 kubernetesVersion: v{{ KUBERNETES_VERSION }}
-networking:
-  podSubnet: {{ POD_NETWORK_CIDR }}
 apiServerCertSANs:
 - {{ MASTER_VIP }}
 - {{ ansible_default_ipv4.address }}
 api:
-  advertiseAddress: {{ MASTER_VIP }}
   controlPlaneEndpoint: {{ MASTER_VIP }}
-apiServerCertSANs:
-- 127.0.0.1
-- {{ MASTER_VIP }}
-{% for host in groups['masters'] %}
-- {{ hostvars[host]['ansible_fqdn'] }}
-{% endfor %}
-{% for host in groups['masters'] %}
-- {{ hostvars[host]['ansible_default_ipv4']['address'] }}
-{% endfor %}
+  advertiseAddress: {{ MASTER_VIP }}
 etcd:
-  endpoints:
+  external:
+    endpoints:
 {% for host in groups['etcd'] %}
-  - https://{{ hostvars[host]['ansible_default_ipv4']['address'] }}:2379
+    - https://{{ hostvars[host]['ansible_default_ipv4']['address'] }}:2379
 {% endfor %}
-  caFile: /etc/kubernetes/pki/etcd/ca.pem
-  certFile: /etc/kubernetes/pki/etcd/client.pem
-  keyFile: /etc/kubernetes/pki/etcd/client-key.pem
-apiServerExtraArgs:
-  endpoint-reconciler-type: "lease"
+    caFile: /etc/kubernetes/pki/etcd/ca.crt
+    certFile: /etc/kubernetes/pki/apiserver-etcd-client.crt
+    keyFile: /etc/kubernetes/pki/apiserver-etcd-client.key
+networking:
+  podSubnet: {{ POD_NETWORK_CIDR }}

@@ -1,0 +1,6 @@
+#
+# Uninstall Kibana
+#
+---
+- name: Uninstall Kibana
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl delete -f /root/setup/kibana/"

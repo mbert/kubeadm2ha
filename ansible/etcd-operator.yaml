@@ -1,11 +1,9 @@
 #
-# Playbook to set up a dashboard.
-# - insecure setup without ssl
-# - for on-premises installation without real load balancers
+# Playbook to set up etcd operator.
 #
 --- 
 
-- name: Set up dashboard
+- name: Set up etcd operator
   hosts: masters
   remote_user: root
   gather_facts: no

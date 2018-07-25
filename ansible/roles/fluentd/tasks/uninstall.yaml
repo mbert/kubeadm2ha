@@ -1,0 +1,6 @@
+#
+# Uninstall fluentd
+#
+---
+- name: Install Fluentd
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl delete -f /root/setup/fluentd/"

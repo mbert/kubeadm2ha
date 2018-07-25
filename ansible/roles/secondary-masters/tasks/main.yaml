@@ -11,6 +11,9 @@
 
 - name: Generate 'kubeadm' configuration file
   template: src=kubeadm-init.yaml.j2 dest=/root/kubeadm-init.yaml
+ 
+- name: Remove /etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf on secondary masters
+  file: "path=/etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf state=absent"
 
 - name: Setup secondary masters one by one
   include_tasks: secondary-master.yaml

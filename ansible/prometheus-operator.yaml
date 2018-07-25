@@ -1,0 +1,15 @@
+#
+# Playbook to set up prometheus operator.
+#
+--- 
+
+- name: Set up prometheus operator
+  hosts: masters
+  remote_user: root
+  gather_facts: no
+  any_errors_fatal: yes
+  roles:
+  - {role: prometheus-operator,      when: "'primary-master'    in group_names" }
+  tags:
+  - prometheus-operator
+

@@ -18,8 +18,8 @@
     loop_var: master
   when: "'primary-master' in group_names"
 
-- name: Set kube-dns replicas
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/kube-dns"
+- name: Set coredns replicas
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/coredns"
   when: "'primary-master' in group_names"
 
 - name: Get current kube-proxy settings

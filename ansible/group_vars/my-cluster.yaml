@@ -5,4 +5,5 @@
 --- 
 CLUSTER_NAME: my-cluster
 MASTER_VIP: 192.168.0.50
-NETWORK_PLUGIN: flannel
+#NETWORK_PLUGIN: flannel
+NETWORK_PLUGIN: weavenet
