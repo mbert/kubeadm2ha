@@ -95,7 +95,7 @@ DOCKER_IMAGES: [
   { name: "k8s.gcr.io/kubernetes-dashboard-{{ HOST_ARCH }}", tag: "{{ DASHBOARD_TAG }}" },
   { name: "k8s.gcr.io/pause-{{ HOST_ARCH }}", tag: "{{ PAUSE_TAG }}" },
   { name: "k8s.gcr.io/pause", tag: "{{ PAUSE_TAG }}" },
-  { name: "nginx", tag: "{{ NGINX_VERSION }}" }
+  { name: "nginx", tag: "{{ NGINX_VERSION }}" },
   { name: "quay.io/coreos/configmap-reload", tag: "{{ CONFIGMAP_RELOAD_TAG }}" },
   { name: "quay.io/coreos/etcd-operator", tag: "{{ ETCD_OPERATOR_TAG }}" },
   { name: "quay.io/coreos/etcd", tag: "v{{ ETCD_TAG }}" },
