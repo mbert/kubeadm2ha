@@ -31,14 +31,3 @@
   loop_control:
     loop_var: worker
 
-- name: Label elasticsearch nodes as "elasticsearch"
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[eshnode]['ansible_hostname'] }} mine/role=\"elasticsearch-hot\""
-  with_items: "{{ groups['elasticsearch-hot'] }}"
-  loop_control:
-    loop_var: eshnode
-
-- name: Label elasticsearch nodes as "elasticsearch"
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[eswnode]['ansible_hostname'] }} mine/role=\"elasticsearch-warm\""
-  with_items: "{{ groups['elasticsearch-warm'] }}"
-  loop_control:
-    loop_var: eswnode

@@ -3,15 +3,7 @@
 #
 ---
 - name: Generate a join token
-  command: "kubeadm token create"
-  register: TOKEN
-
-- name: Generate a hash
-  shell: "openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'"
-  register: HASH
-
-- name: Generate a command line with join token for adding worker nodes
-  template: src=join-worker-node.sh.j2 dest=/tmp/join-worker-node.sh owner=root group=root mode=0755
+  shell: "(/bin/echo -e '#!/bin/sh\n\nrm -f /etc/kubernetes/kubelet.conf /etc/kubernetes/pki/ca.crt\n'; kubeadm token create --print-join-command) >/tmp/join-worker-node.sh"
 
 - name: Fetch script with generated command line for adding worker nodes
   fetch: src=/tmp/join-worker-node.sh dest=/tmp/ flat=yes

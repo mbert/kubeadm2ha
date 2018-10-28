@@ -1,6 +1,6 @@
 *~
 *.retry
-md-kubernetes.inventory
-group_vars/md-kubernetes.yaml
-group_vars/singapore-office.yaml
-singapore-office.inventory
+md-*.inventory
+group_vars/md-*.yaml
+group_vars/*-office.yaml
+*-office.inventory

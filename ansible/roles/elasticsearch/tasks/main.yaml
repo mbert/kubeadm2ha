@@ -2,6 +2,18 @@
 # Sets up an Elasticsearch for centralised logging
 #
 ---
+- name: Label elasticsearch nodes as "elasticsearch-hot"
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[eshnode]['ansible_hostname'] }} mine/role=\"elasticsearch-hot\""
+  with_items: "{{ groups['elasticsearch-hot'] }}"
+  loop_control:
+    loop_var: eshnode
+
+- name: Label elasticsearch nodes as "elasticsearch-warm"
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[eswnode]['ansible_hostname'] }} mine/role=\"elasticsearch-warm\""
+  with_items: "{{ groups['elasticsearch-warm'] }}"
+  loop_control:
+    loop_var: eswnode
+
 - name: Create directory for Elasticsearch installation
   file: "path=/root/setup/elasticsearch mode=0755 state=directory"
 

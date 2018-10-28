@@ -21,8 +21,9 @@
   register: CGROUPS_DRIVER
   changed_when: false
 
-- name: Use docker's cgroup driver and update kubelet accordinlgy
+- name: Use docker's cgroup driver and update kubelet accordinlgy if KUBERNETES_VERSION < 1.11.0
   replace: "regexp='^(.*--cgroup-driver=)(systemd|cgroupfs)(.*)$' replace='\\1{{ CGROUPS_DRIVER.stdout_lines[0] }}\\3' path='/etc/systemd/system/kubelet.service.d/10-kubeadm.conf'"
+  when: "KUBERNETES_VERSION is version_compare('1.11.0', '<')"
 
 - name: Reload kubelet systemd unit
   systemd: name=kubelet daemon-reload=yes
