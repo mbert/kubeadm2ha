@@ -77,7 +77,7 @@ The _cluster-dashboard.yaml_ playbook does the following:
 
 For accessing the dashbord in this configuration there are two options:
 
-1. Use [https://<YOUR-CLUSTER-VIP>:30443](https://<YOUR-CLUSTER-VIP>:30443) - i.e. connect to the remote IP. You will get a certificat warning though because the cluster's certificates will be unknown to your browser.
+1. Use `https://<YOUR-CLUSTER-VIP>:30443` - i.e. connect to the remote IP. You will get a certificat warning though because the cluster's certificates will be unknown to your browser.
 2. Run `kubectl proxy` on your local host (which requires to have configured `kubectl` for your local host, see _Configuring local access_ below for automating this), then access via [http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/)
 
 The dashboard will ask you to authenticate. Again, there are several options:
