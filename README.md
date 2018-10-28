@@ -13,14 +13,22 @@ This repository contains a set of ansible scripts to do this. There are three pl
 3. _cluster-uninstall.yaml_ removes data and configuration files to a point that _cluster-setup.yaml_ can be used again.
 4. _cluster-dashboard.yaml_ sets up the dashboard including influxdb/grafana.
 5. _etcd-operator.yaml_ sets up the etcd-operator.
-6. _cluster-images.yaml_ prefetches all images needed for Kubernetes operations and transfers them to the target hosts.
-7. _local-access.yaml_ fetches a patched _admin.conf_ file to _/tmp/MY-CLUSTER-NAME-admin.conf_. After copying it to _~/.kube/config_ remote _kubectl_ access via V-IP / load balancer can be tested. 
-8. _uninstall-dashboard.yaml_ removes the dashboard.
-9. _cluster-upgrade.yaml_ upgrades a cluster.
+6. _prometheus-operator.yaml_ sets up the prometheus-operator.
+7. _efk-stack.yaml_ sets up an EFK stack for centralised logging.
+8. _cluster-images.yaml_ prefetches all images needed for Kubernetes operations and transfers them to the target hosts.
+9. _local-access.yaml_ fetches a patched _admin.conf_ file to _/tmp/MY-CLUSTER-NAME-admin.conf_. After copying it to _~/.kube/config_ remote _kubectl_ access via V-IP / load balancer can be tested. 
+10. _uninstall-dashboard.yaml_ removes the dashboard.
+11. _uninstall-efk-stack.yaml_ removes the EFK stack including Fluentd cache and Elasticsearch data files.
+12. _cluster-upgrade.yaml_ upgrades a cluster.
 
 ## Prerequisites
 
 Ansible version 2.4 or higher is required. Older versions will not work. 
+
+On the target environment, some settings for successful installation of Kubernetes are necessary. The "Before you begin" section in the [official kubernetes documentation](https://kubernetes.io/docs/setup/independent/install-kubeadm/) applies, nevertheless here is a convenience list of things to take care of:
+1. Set the value of `/proc/sys/net/bridge/bridge-nf-call-iptables` to `1`. There may be different, distro-dependent ways to accomplish this in a persistent way, however most people will get away by editing _/etc/sysctl.conf_.
+2. Load the `ip_vs` kernele module. Most people will want to create a file in _/etc/modprobe.de_ for this.
+3. Disable swap. Make sure to edit _/etc/fstab_ to remove the swap mount from it.
 
 ## Configuration
 
@@ -38,10 +46,17 @@ In order to use the ansible scripts, at least two files need to be configured:
 5. Configure kube-proxy to use the V-IP / load balancer URL and configure _kube-dns_ to the master nodes' cardinality.
 6. Use _kubeadm_ to join all hosts in the group _minions_. 
 
+## What the etcd-operator setup does
+
+1. Install etcd-operator, so that applications can use it for creating their own _etcd_ clusters (Kubernetes is running on its own cluster running natively, not controlled by etcd-operator).
+
+## What the prometheus-operator setup does
+
+1. Install prometheus-operator, so that applications can use it for creating their own _prometheus_ instances, service monitors etc.
+
 ## What the additional playbooks can be used for:
 - Add an NGINX-based load-balancer to the cluster. After this, the apiserver will be available through the virtual-IP on port 8443. Note that this is will interfere with _watch_ actions, like `kubectl log s -f` from a remote host (as a workaround you can still use port 6443 for remote a
 ccess via `kubectl`, also see #4).
-- Add etcd-operator for use with applications running in the cluster. This is an add-on purely because I happen to need it.
 - Pre-fetch and transfer Kubernetes images. This is useful for systems without Internet access.
 
 ## What the images setup does
@@ -80,6 +95,14 @@ The dashboard will ask you to authenticate. Again, there are several options:
     ```
 
 3. Use the _local-access.yaml_ playbook to generate a configuration file. That file can be copied to _~/.kube/config_ for local `kubectl` access. It can also be uploaded as _kubeconfig_ file in the dashboard's login dialogue.
+
+## Setting up the EFK stack for centralised logging
+
+1. Elasticsearch is installed as "hot/warm", i.e. all indices older than 3 days are moved from the "hot" to the "warm" instances automatically. It is assumed that the "hot" instances run on machines with faster hardware and probably less disk space. If `kubectl proxy` is running, the ES instance can be accessed through this URL: [http://localhost:8001/api/v1/namespaces/kube-system/services/elasticsearch-logging-client:9200/proxy/_search?q=*](http://localhost:8001/api/v1/namespaces/kube-system/services/elasticsearch-logging-client:9200/proxy/_search?q=*)
+
+2. Kibana can be used for accessing the logs from Elasticsearch. If `kubectl proxy` is running it can be accessed through this URL: [http://localhost:8001/api/v1/namespaces/kube-system/services/kibana-logging:http/proxy/app/kibana#/](http://localhost:8001/api/v1/namespaces/kube-system/services/kibana-logging:http/proxy/app/kibana#/)
+
+3. Fluentd collects the logs from the running pods. In order to normalise log files using different formats, you will most likely want to edit the the configmap fluentd uses (see the file _fluentd-es-configmap.yaml_ in _roles/fluentd/files_). A working, while not terribly efficient way to manage this is the use of the [rewrite_tag_filter](https://docs.fluentd.org/v1.0/articles/out_rewrite_tag_filter) as a multiplexer depending on the different log formats and then the [parser](https://docs.fluentd.org/v1.0/articles/parser-plugin-overview) filter with one section per (rewritten) tag for the actual parsing and normalising (for normalising different time/date formats, the [record_transformer](https://docs.fluentd.org/v1.0/articles/filter_record_transformer) filter can be used). 
 
 ## Configuring local access
 
