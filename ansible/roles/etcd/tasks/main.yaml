@@ -21,21 +21,32 @@
   file: "path=/tmp/certs state=absent"
   when: "'primary-etcd' in group_names"
 
-- name: Generate versioncfg.yaml on primary etcd node
-  template: src=versioncfg.yaml.j2 dest=/root/versioncfg.yaml
-  when: "'primary-etcd' in group_names"
+- name: Generate versioncfg.yaml on primary etcd node for KUBERNETES_VERSION < 1.12.0
+  template: src=versioncfg-v1alpha1.yaml.j2 dest=/root/versioncfg.yaml
+  when: "KUBERNETES_VERSION is version_compare('1.12.0', '<') and 'primary-etcd' in group_names"
+ 
+- name: Generate versioncfg.yaml on primary etcd node for KUBERNETES_VERSION >= 1.12.0
+  template: src=versioncfg-v1alpha3.yaml.j2 dest=/root/versioncfg.yaml
+  when: "KUBERNETES_VERSION is version_compare('1.12.0', '>=') and 'primary-etcd' in group_names"
 
 - name: Create temporary cert directories on primary etcd node
   file: "path=/tmp/certs/{{ hostvars[item]['ansible_default_ipv4']['address'] }}/certs state=directory"
   with_items: "{{ groups['etcd'] }}"
   when: "'primary-etcd' in group_names"
 
-- name: Generate kubeadmcfg.yaml on primary etcd node
-  template: src=kubeadmcfg.yaml.j2 dest=/tmp/certs/{{ hostvars[etcdnode]['ansible_default_ipv4']['address'] }}/kubeadmcfg.yaml
+- name: Generate kubeadmcfg.yaml on primary etcd node for KUBERNETES_VERSION < 1.12.0
+  template: src=kubeadmcfg-v1alpha1.yaml.j2 dest=/tmp/certs/{{ hostvars[etcdnode]['ansible_default_ipv4']['address'] }}/kubeadmcfg.yaml
   with_items: "{{ groups['etcd'] }}"
   loop_control:
     loop_var: etcdnode
-  when: "'primary-etcd' in group_names"
+  when: "KUBERNETES_VERSION is version_compare('1.12.0', '<') and 'primary-etcd' in group_names"
+
+- name: Generate kubeadmcfg.yaml on primary etcd node for KUBERNETES_VERSION >= 1.12.0
+  template: src=kubeadmcfg-v1alpha3.yaml.j2 dest=/tmp/certs/{{ hostvars[etcdnode]['ansible_default_ipv4']['address'] }}/kubeadmcfg.yaml
+  with_items: "{{ groups['etcd'] }}"
+  loop_control:
+    loop_var: etcdnode
+  when: "KUBERNETES_VERSION is version_compare('1.12.0', '>=') and 'primary-etcd' in group_names"
 
 - name: Create etcd CA
   command: "kubeadm alpha phase certs etcd-ca --config=/root/versioncfg.yaml"
