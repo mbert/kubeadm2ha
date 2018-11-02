@@ -2,6 +2,16 @@
 # Playbook to set up EFK stack for logging.
 #
 --- 
+- name: Label Elasticsearch nodes
+  hosts: nodes
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  tasks:
+  - import_tasks: "{{ playbook_dir }}/roles/elasticsearch/tasks/label.yaml"
+    when: "'primary-master' in group_names"
+  tags:
+  - label
 
 - name: Set up Elasticsearch
   hosts: primary-master

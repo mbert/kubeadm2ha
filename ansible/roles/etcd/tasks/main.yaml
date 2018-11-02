@@ -82,7 +82,7 @@
   command: "kubeadm alpha phase etcd local --config=/root/kubeadmcfg.yaml"
 
 - name: Check etcd cluster health on primary etcd node
-  shell: "for i in 1 2 3 4 5; do docker run --rm --net host -v /etc/kubernetes:/etc/kubernetes gcr.io/google_containers/etcd-{{ HOST_ARCH }}:{{ ETCD_TAG }} etcdctl --cert-file /etc/kubernetes/pki/etcd/peer.crt --key-file /etc/kubernetes/pki/etcd/peer.key --ca-file /etc/kubernetes/pki/etcd/ca.crt --endpoints https://{{ ansible_default_ipv4.address }}:2379 cluster-health && exit 0; sleep 2s; done; /bin/false"
+  shell: "for i in 1 2 3 4 5; do docker run --rm --net host -v /etc/kubernetes:/etc/kubernetes gcr.io/google_containers/etcd-{{ HOST_ARCH }}:{{ ETCD_TAG }} etcdctl --cert-file /etc/kubernetes/pki/etcd/peer.crt --key-file /etc/kubernetes/pki/etcd/peer.key --ca-file /etc/kubernetes/pki/etcd/ca.crt --endpoints https://{{ ansible_default_ipv4.address }}:2379 cluster-health && exit 0; sleep 3s; done; /bin/false"
   when: "'primary-etcd' in group_names"
 
 - name: Archive certs for master nodes on primary etcd node
