@@ -1,0 +1,15 @@
+
+#
+# Variables for the 'md-kubernetes' environment
+#
+--- 
+CLUSTER_NAME: md-kubernetes
+PROXY_SERVER: http://proxy.dermalog.hh:3128
+NO_PROXY_LIST: dockerregistry,.dermalog.hh,192.168.0.0/16,jira.dc.dermalog.com
+INSECURE_REGISTRY: dockerregistry.backend.dc.dermalog.hh:5000
+#NETWORK_PLUGIN: flannel
+NETWORK_PLUGIN: weavenet
+NTP_SERVER: 172.16.8.250
+#NFS_SHARE: /var/nfsshare
+#NFS_MOUNT: /var/kubernetes
+#SETUP_DOCKER: true

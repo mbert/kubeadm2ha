@@ -4,7 +4,7 @@
 --- 
 
 - name: Get settings file
-  hosts: primary-master
+  hosts: primary_master
   remote_user: root
   gather_facts: no
   any_errors_fatal: yes

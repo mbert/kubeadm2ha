@@ -4,15 +4,15 @@
 ---
 
 - name: Copy join script (fetched in 'join-token' role)
-  copy: src=/tmp/join-worker-node.sh dest=/root/join-worker-node.sh owner=root group=root mode=0755
+  copy: src=/tmp/join-worker-node.sh dest=/tmp/join-worker-node.sh owner=root group=root mode=0755
 
 - name: Join worker-node
-  command: sh /root/join-worker-node.sh
+  shell: "/tmp/join-worker-node.sh 2>&1 | tee /tmp/join-worker-node.out; exit ${PIPESTATUS[0]}"
 
 - name: Create script for waiting for minions
   template: src="wait-for-minions.sh.j2" dest="/tmp/wait-for-minions.sh" mode=0755
-  when: "'primary-master' in group_names"
+  when: "'primary_master' in group_names"
 
 - name: Wait for minions
   command: "sh /tmp/wait-for-minions.sh"
-  when: "'primary-master' in group_names"
+  when: "'primary_master' in group_names"

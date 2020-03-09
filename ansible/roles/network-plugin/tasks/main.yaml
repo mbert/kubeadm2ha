@@ -4,7 +4,7 @@
 ---
 
 - name: Make sure that we're on a supported NETWORK_PLUGIN
-  fail: msg="Unsupported NETWORK_PLUGIN. Check roles/primary-master/tasks/*.yaml"
+  fail: msg="Unsupported NETWORK_PLUGIN. Check roles/primary_master/tasks/*.yaml"
   when: "NETWORK_PLUGIN not in [ 'flannel', 'weavenet', 'calico' ]"
 
 - import_tasks: weavenet.yaml

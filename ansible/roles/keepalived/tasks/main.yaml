@@ -2,12 +2,18 @@
 # Configure keepalived for the masters.
 #
 ---
+- name: Install required packages from EPEL repo (only for masters)
+  yum: state=present disable_gpg_check=yes enablerepo=epel,ol7_preview name=keepalived-{{ KEEPALIVED_VERSION }} allow_downgrade=yes
 
 - name: Copy check script
   template: src=check_apiserver.sh.j2 dest=/etc/keepalived/check_apiserver.sh owner=root group=root mode=0755
 
 - name: Generate configuraton file
   template: src=keepalived.conf.j2 dest=/etc/keepalived/keepalived.conf
+
+- name: Copying override script to primary master in order to have a VIP before at least one APIServer is up
+  copy: src=check_override.sh dest=/etc/keepalived/check_override.sh mode=0755 owner=root group=root
+  when: "'primary_master' in group_names"
 
 - name: Enable and start keepalived
   service: name=keepalived enabled=yes state=restarted

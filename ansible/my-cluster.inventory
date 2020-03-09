@@ -1,56 +1,63 @@
-[primary-master]
-my-cluster-master-1 ansible_ssh_host=192.168.0.51
+[apiserver_vip]
+192.168.0.50
 
-[secondary-masters]
-my-cluster-master-2 ansible_ssh_host=192.168.0.52
-my-cluster-master-3 ansible_ssh_host=192.168.0.53
+[primary_master]
+md-kubernetes-master-1 ansible_ssh_host=192.168.0.51
+
+[secondary_masters]
+md-kubernetes-master-2 ansible_ssh_host=192.168.0.52
+md-kubernetes-master-3 ansible_ssh_host=192.168.0.53
 
 [masters:children]
-primary-master
-secondary-masters
+primary_master
+secondary_masters
 
-[primary-etcd:children]
-primary-master
+[primary_etcd:children]
+primary_master
 
-[secondary-etcds:children]
-secondary-masters
+[secondary_etcds:children]
+secondary_masters
 
 [etcd:children]
-primary-etcd
-secondary-etcds
+primary_etcd
+secondary_etcds
 
-[elasticsearch-hot]
-#my-cluster-minion-4 ansible_ssh_host=192.168.0.180
-#my-cluster-minion-5 ansible_ssh_host=192.168.0.181
-my-cluster-minion-6 ansible_ssh_host=192.168.0.186
+[elasticsearch_hot]
+md-kubernetes-minion-4 ansible_ssh_host=192.168.0.180
+#md-kubernetes-minion-5 ansible_ssh_host=192.168.0.181
+#md-kubernetes-minion-6 ansible_ssh_host=192.168.0.186
 
-[elasticsearch-warm]
-my-cluster-minion-6 ansible_ssh_host=192.168.0.186
-#my-cluster-minion-7 ansible_ssh_host=192.168.0.188
+[elasticsearch_warm]
+md-kubernetes-minion-5 ansible_ssh_host=192.168.0.181
+#md-kubernetes-minion-6 ansible_ssh_host=192.168.0.186
+#md-kubernetes-minion-7 ansible_ssh_host=192.168.0.188
 
 [elasticsearch:children]
-elasticsearch-hot
-elasticsearch-warm
+elasticsearch_hot
+elasticsearch_warm
 
 [workers]
-my-cluster-minion-1 ansible_ssh_host=192.168.0.56
-my-cluster-minion-2 ansible_ssh_host=192.168.0.57
-my-cluster-minion-3 ansible_ssh_host=192.168.0.58
+md-kubernetes-minion-1 ansible_ssh_host=192.168.0.56
+md-kubernetes-minion-2 ansible_ssh_host=192.168.0.57
+md-kubernetes-minion-3 ansible_ssh_host=192.168.0.58
 
 [minions:children]
 elasticsearch
 workers
 
-[nfs-server]
-my-cluster-nfs ansible_ssh_host=192.168.0.55
+[nfs_server]
+md-kubernetes-nfs ansible_ssh_host=192.168.0.55
 
 [nodes:children]
 masters
 minions
 
-[nodes-extended:children]
+[nodes_extended:children]
 nodes
-nfs-server
+nfs_server
 
-[my-cluster:children]
-nodes-extended
+[my_cluster:children]
+nodes_extended
+
+[all:vars]
+ansible_python_interpreter=auto_silent

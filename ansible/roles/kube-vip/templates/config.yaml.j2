@@ -1,0 +1,30 @@
+localPeer:
+  id: {{ ansible_hostname }}
+  address: {{ ansible_default_ipv4.address }}
+  port: 10000
+remotePeers:
+{% for host in groups['masters'] %}
+{% if hostvars[host]['ansible_hostname'] != ansible_hostname %}- id: {{ hostvars[host]['ansible_hostname'] }}
+  address: {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+  port: 10000
+{% endif %}
+{% endfor %}
+vip: {{ APISERVER_VIP }}
+gratuitousARP: true
+singleNode: false
+{% if 'primary_master' in group_names %}
+startAsLeader: true
+{% else %}
+startAsLeader: false
+{% endif %}
+interface: {{ ansible_default_ipv4.interface }}
+loadBalancers:
+- name: API Server Load Balancer
+  type: tcp
+  port: 8443
+  bindToVip: false
+  backends:
+{% for host in groups['masters'] %}
+  - port: 6443
+    address: {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+{% endfor %}

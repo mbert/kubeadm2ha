@@ -1,0 +1,8 @@
+
+#
+# Variables for the 'md-kubernetes' environment
+#
+--- 
+CLUSTER_NAME: md-kubernetes
+#NETWORK_PLUGIN: flannel
+NETWORK_PLUGIN: weavenet

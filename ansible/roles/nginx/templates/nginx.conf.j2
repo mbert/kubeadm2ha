@@ -18,7 +18,7 @@ stream {
     }
 
     server {
-        listen 8443;
+        listen {{ APISERVER_LB_PORT }};
         proxy_timeout 1s;
         proxy_connect_timeout 1s;
         proxy_pass apiserver;

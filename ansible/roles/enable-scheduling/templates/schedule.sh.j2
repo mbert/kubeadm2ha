@@ -1,8 +1,0 @@
-#!/bin/sh
-
-KUBECONFIG=/etc/kubernetes/admin.conf
-export KUBECONFIG
-
-{% for host in groups['masters'] %}
-kubectl uncordon {{ hostvars[host]['ansible_hostname'] }} || exit 1
-{% endfor %}

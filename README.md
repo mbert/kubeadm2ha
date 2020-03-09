@@ -1,4 +1,4 @@
-# kubeadm2ha - Workarounds for the time before kubeadm HA becomes available
+# kubeadm2ha - Automatic setup of HA clusters using kubeadm
 
 A set of scripts and documentation for adding redundancy (etcd cluster, multiple masters) to a cluster set up with kubeadm 1.8. This code is intended to demonstrate and simplify creation of redundant-master setups while still using kubeadm which is still lacking this functionality. See [kubernetes/kubeadm/issues/546](https://github.com/kubernetes/kubeadm/issues/546) for discussion on this.
 
@@ -27,24 +27,25 @@ Ansible version 2.4 or higher is required. Older versions will not work.
 
 On the target environment, some settings for successful installation of Kubernetes are necessary. The "Before you begin" section in the [official kubernetes documentation](https://kubernetes.io/docs/setup/independent/install-kubeadm/) applies, nevertheless here is a convenience list of things to take care of:
 1. Set the value of `/proc/sys/net/bridge/bridge-nf-call-iptables` to `1`. There may be different, distro-dependent ways to accomplish this in a persistent way, however most people will get away by editing _/etc/sysctl.conf_.
-2. Load the `ip_vs` kernele module. Most people will want to create a file in _/etc/modprobe.de_ for this.
+2. Load the `ip_vs` kernel module. Most people will want to create a file in _/etc/modprobe.de_ for this.
 3. Disable swap. Make sure to edit _/etc/fstab_ to remove the swap mount from it.
+4. If you want to use the EFK stack, you'll also have to define the following groups: _elasticsearch_hot_ (for hosts with fast hardware, more RAM on which the "hot" ES instances will be run, mutually exclusive with _elasticsearch_warm_), _elasticsearch_warm_ (for hosts with more disk space on which the "warm" ES instances will be run, mutually exclusive with _elasticsearch_hot_), _elasticsearch_ (all elasticsearch hosts). See the inventory _md-kubernetes.inventory_ for an example. The Elasticsearch data nodes require a `nofile` limit not lower than `65536` which is well above of the defaults on some systems. If using the JSON-based configuration file _/etc/docker/daemon.json_, you may have to add this: `"default-ulimits":{"nofile":{"Name":"nofile","Hard":65536,"Soft":65536}}`.
 
 ## Configuration
 
 In order to use the ansible scripts, at least two files need to be configured:
 
 1. Either edit _my-cluster.inventory_ or create your own. The inventory _must_ define the following groups: 
- _primary-master_ (a single machine on which _kubeadm_ will be run), _secondary-masters_ (the other masters), _masters_ (all masters), _minions_ (the worker nodes), _nodes_ (all nodes), _etcd_ (all machines on which etcd is installed, usually the masters).
-2. Either edit _group_vars/my-cluster.yaml_ to your needs or create your own (named after the group defined in the inventory you want to use). Override settings from _group_vars/all.yaml_ where necessary.
+ _primary_master_ (a single machine on which _kubeadm_ will be run), _secondary_masters_ (the other masters), _masters_ (all masters), _minions_ (the worker nodes), _nodes_ (all nodes), _etcd_ (all machines on which etcd is installed, usually the masters).
+2. Either edit _group_vars/my_cluster.yaml_ to your needs or create your own (named after the group defined in the inventory you want to use). Override settings from _group_vars/all.yaml_ where necessary. You may decide to change some of the defaults for your environment: `LOAD_BALANCING` (`kube-vip` or `nginx`), `NETWORK_PLUGIN` (`weavenet`, `flannel` or `calico`) and `ETCD_HOSTING` (`stacked` if running on the masters, else `external`).
 
 ## What the cluster setup does
 1. Set up an _etcd_ cluster with self-signed certificates on all hosts in group _etcd._.
-2. Set up a _keepalived_ cluster on all hosts in group _masters_.
-3. Set up a master instance on the host in group _primary-master_ using _kubeadm._
-4. Set up master instances on all hosts in group _secondary-masters_ by copying and patching (replace the primary master's host name and IP) the configuration created by _kubeadm_ and have them join the cluster.
-5. Configure kube-proxy to use the V-IP / load balancer URL and configure _kube-dns_ to the master nodes' cardinality.
-6. Use _kubeadm_ to join all hosts in the group _minions_. 
+2. Set up a virtual IP and load balancing: either using a static pod for _kube-vip_ or a _keepalived_ cluster on all hosts in group _masters_.
+3. Set up a master instance on the host in group _primary_master_ using _kubeadm._
+4. Set up master instances on all hosts in group _secondary_masters_ by copying and patching (replace the primary master's host name and IP) the configuration created by _kubeadm_ and have them join the cluster.
+5. Use _kubeadm_ to join all hosts in the group _minions_. 
+6. Sets up a service account 'admin-user' and cluster role binding for the role 'cluster-admin' for remote access (if wanted).
 
 ## What the etcd-operator setup does
 
@@ -70,17 +71,12 @@ ccess via `kubectl`, also see #4).
 
 The _cluster-dashboard.yaml_ playbook does the following:
 
-1. Install the _influxdb_, _grafana_ and _dashboard_ components.
+1. Install the _dashboard_ and _metrics-server_ components.
 2. Scale the number of instances to the number of master nodes.
-3. Expose the instances via _NodePort_, so that they can then be accessed through the V-IP.
-4. Sets up a service account 'admin-user' and cluster role binding for the role 'cluster-admin' so that the dashboard can be accessed with root-like privileges.
 
-For accessing the dashbord in this configuration there are two options:
+For accessing the dashbord run `kubectl proxy` on your local host (which requires to have configured `kubectl` for your local host, see _Configuring local access_ below for automating this), then access via [http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/)
 
-1. Use `https://<YOUR-CLUSTER-VIP>:30443` - i.e. connect to the remote IP. You will get a certificat warning though because the cluster's certificates will be unknown to your browser.
-2. Run `kubectl proxy` on your local host (which requires to have configured `kubectl` for your local host, see _Configuring local access_ below for automating this), then access via [http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/)
-
-The dashboard will ask you to authenticate. Again, there are several options:
+The dashboard will ask you to authenticate. There are several options:
 
 1. Use the token of an existing service account with sufficient privileges. On many clusters this command works for root-like access:
 
@@ -185,7 +181,7 @@ After the upgrade the NGINX load balancer will not be in use. To reenable it, si
 
 If the upgrade fails the situation afterwards depends on the phase in which things went wrong.
 
-If _kubeadm_ failed to upgrade the cluster it will try to perform a rollback. Hence if that happened on the first master, chances are pretty good that the cluster is still intact. In that case all you need is to start _docker_, _kubelet_ and _keepalived_ on the secondary masters and then uncordon them (`kubectl uncordon <secondary-master-fqdn>`) to be back where you started from.
+If _kubeadm_ failed to upgrade the cluster it will try to perform a rollback. Hence if that happened on the first master, chances are pretty good that the cluster is still intact. In that case all you need is to start _docker_, _kubelet_ and _keepalived_ on the secondary masters and then uncordon them (`kubectl uncordon <secondary_master-fqdn>`) to be back where you started from.
 
 If _kubeadm_ on one of the secondary masters failed you still have a working, upgraded cluster, but without the secondary masters in a somewhat undefined condition. In some cases _kubeadm_ fails if the cluster is still busy after having upgraded the previous master node, so that waiting a bit and running `kubeadm upgrade apply v<VERSION>` may even succeed. Otherwise you will have to find out what went wrong and join the secondaries manually. Once this has been done, finish the automatic upgrade process by processing the second half of the playbook only:
 

@@ -11,7 +11,11 @@ metadata:
     addonmanager.kubernetes.io/mode: Reconcile
 spec:
   serviceName: elasticsearch-logging-data
-  replicas: 2
+{% if ES_NODE_TYPE == 'hot' %}
+  replicas: {{ groups['elasticsearch_hot'] | length }}
+{% else %}
+  replicas: {{ groups['elasticsearch_warm'] | length }}
+{% endif %}
   selector:
     matchLabels:
       k8s-app: elasticsearch-logging

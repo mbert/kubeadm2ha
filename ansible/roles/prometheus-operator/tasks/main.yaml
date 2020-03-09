@@ -6,17 +6,15 @@
   local_action: "script clone-from-github.sh coreos prometheus-operator {{ GIT_PROMETHEUS_OPERATOR_TAG }}"
 
 - name: Copy prometheus-operator git to primary master
-  synchronize: "src=/tmp/prometheus-operator dest=/root/setup/prometheus-backend/"
+  synchronize: "src=/tmp/prometheus-operator dest=/root/setup/"
 
 - name: Copy prometheus RBAC setup to primary master
   copy: "src=setup-rbac-prometheus.yaml dest=/root/setup"
 
-- name: Copy prometheus backend setup to primary master
-  copy: "src=prometheus-backend.yaml dest=/root/setup"
-
 - name: Install prometheus-operator
   shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; cd /root/setup/prometheus-operator && kubectl create -f bundle.yaml && kubectl rollout status deployment prometheus-operator"
 
-- name: Set up prometheus backend instance
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl create -f /root/setup/prometheus-backend/"
+- name: Install prometheus-operator service account and cluster role binding
+  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl create -f /root/setup/setup-rbac-prometheus.yaml"
+
 

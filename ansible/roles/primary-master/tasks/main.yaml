@@ -3,28 +3,42 @@
 #
 ---
 
-- name: Generate 'kubeadm' configuration file for KUBERNETES_VERSION < 1.12.0
-  template: src=kubeadm-init-v1alpha2.yaml.j2 dest=/root/kubeadm-init.yaml
-  when: "KUBERNETES_VERSION is version_compare('1.12.0', '<')"
- 
-- name: Generate 'kubeadm' configuration file for KUBERNETES_VERSION >= 1.12.0
-  template: src=kubeadm-init-v1alpha3.yaml.j2 dest=/root/kubeadm-init.yaml
-  when: "KUBERNETES_VERSION is version_compare('1.12.0', '>=')"
+- name: Generate 'kubeadm' configuration file (external etcd only)
+  template: src=kubeadm-init-v1beta2.yaml.j2 dest=/root/kubeadm-init.yaml
+  when: "ETCD_HOSTING == 'external'"
 
-- name: Remove /etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf on primary master
+- name: Remove /etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf on primary master (external etcd only)
   file: "path=/etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf state=absent"
+  when: "ETCD_HOSTING == 'external'"
 
-- name: Run 'kubeadm' if this master node is also an etcd node (need to ignore two preflight errors here)
-  command: kubeadm init --ignore-preflight-errors=FileAvailable--etc-kubernetes-manifests-etcd.yaml --ignore-preflight-errors=Port-10250 --config=/root/kubeadm-init.yaml
-  when: "'etcd' in group_names"
+- name: Stop kubelet on primary master
+  service: "name=kubelet state=stopped"
 
-- name: Run 'kubeadm' if this master node is not an etcd node (all preflight errors active here)
-  command: kubeadm init --config=/root/kubeadm-init.yaml
-  when: "'etcd' not in group_names"
+- name: Run 'kubeadm init' (external etcd only)
+  shell: "kubeadm init --config=/root/kubeadm-init.yaml --upload-certs 2>&1 | tee /tmp/kubeadm-init.out; exit ${PIPESTATUS[0]}"
+  when: "ETCD_HOSTING == 'external'"
 
-- name: Archive /etc/kubernetes/pki/[cs]a.*
+- name: Run 'kubeadm init' (stacked etcd only)
+  shell: "kubeadm init --control-plane-endpoint '{{ APISERVER_VIP }}:{{ APISERVER_LB_PORT }}' --upload-certs --kubernetes-version 'v{{ KUBERNETES_VERSION }}' 2>&1 | tee /tmp/kubeadm-init.out; exit ${PIPESTATUS[0]}"
+  when: "ETCD_HOSTING != 'external'"
+
+- name: Archive /etc/kubernetes/pki/[cs]a.* (external etcd only)
   archive: path=/etc/kubernetes/pki/[cs]a.*,/etc/kubernetes/pki/front-proxy-ca.crt,/etc/kubernetes/pki/front-proxy-ca.key dest=/tmp/master-certs.tar.gz
+  when: "ETCD_HOSTING == 'external'"
 
-- name: Fetch /tmp/master-certs.tar.gz
+- name: Fetch /tmp/master-certs.tar.gz (external etcd only)
   fetch: src=/tmp/master-certs.tar.gz dest=/tmp/ flat=yes
+  when: "ETCD_HOSTING == 'external'"
+
+- name: Generate /tmp/join-secondary-master.sh
+  script: create-join-secondary-master-script.sh /tmp/kubeadm-init.out /tmp/join-secondary-master.sh
+
+- name: Remove override script to primary master (keepalived only)
+  file: path=/etc/keepalived/check_override.sh state=absent
+  when: "LOAD_BALANCING == 'nginx'"
+
+- name: Fetch /tmp/join-secondary-master.sh
+  fetch: src=/tmp/join-secondary-master.sh dest=/tmp/ flat=yes
+
+
 

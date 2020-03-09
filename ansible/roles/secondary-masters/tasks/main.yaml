@@ -2,26 +2,27 @@
 # Initialise secondary masters
 #
 ---
+- name: Make sure that the kubeadm output has been saved
+  local_action: "file path=/tmp/join-secondary-master.sh state=file"
 
 - name: Make sure that kubelet is not up
   service: name=kubelet state=stopped
 
-- name: Unarchive master-certs.tar.gz to /etc/kubernetes/pki/
+- name: Unarchive master-certs.tar.gz to /etc/kubernetes/pki/ (external etcd only)
   unarchive: copy=yes src=/tmp/master-certs.tar.gz dest=/etc/kubernetes/pki/
+  when: "ETCD_HOSTING == 'external'"
 
-- name: Generate 'kubeadm' configuration file for KUBERNETES_VERSION < 1.12.0
-  template: src=kubeadm-init-v1alpha2.yaml.j2 dest=/root/kubeadm-init.yaml
-  when: "KUBERNETES_VERSION is version_compare('1.12.0', '<')"
+- name: Generate 'kubeadm' configuration file (external etcd only)
+  template: src=kubeadm-init-v1beta2.yaml.j2 dest=/root/kubeadm-init.yaml
+  when: "ETCD_HOSTING == 'external'"
  
-- name: Generate 'kubeadm' configuration file for KUBERNETES_VERSION >= 1.12.0
-  template: src=kubeadm-init-v1alpha3.yaml.j2 dest=/root/kubeadm-init.yaml
-  when: "KUBERNETES_VERSION is version_compare('1.12.0', '>=')"
- 
-- name: Remove /etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf on secondary masters
+- name: Remove /etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf on secondary masters (external etcd only)
   file: "path=/etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf state=absent"
+  when: "ETCD_HOSTING == 'external'"
 
 - name: Setup secondary masters one by one
   include_tasks: secondary-master.yaml
-  with_items: "{{ groups['secondary-masters'] }}"
+  with_items: "{{ groups['secondary_masters'] }}"
   loop_control:
     loop_var: master
+

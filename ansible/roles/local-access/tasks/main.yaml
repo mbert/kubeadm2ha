@@ -10,4 +10,4 @@
   fetch: src=/tmp/admin.conf dest=/tmp/{{ CLUSTER_NAME }}-admin.conf flat=yes
 
 - name: Done
-  debug: msg="The kubeconfig file was saved to '/tmp/{{ CLUSTER_NAME }}-admin.conf'. You can copy it to ~/.kube/config or use for access to the dashboard."
+  debug: msg="The kubeconfig file was saved to '/tmp/{{ CLUSTER_NAME }}-admin.conf'. You can run 'cp /tmp/{{ CLUSTER_NAME }}-admin.conf ~/.kube/config' to use it or for access to the dashboard."

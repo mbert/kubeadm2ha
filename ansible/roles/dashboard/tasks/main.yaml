@@ -19,64 +19,39 @@
   local_action: "script clone-from-github.sh kubernetes dashboard {{ GIT_DASHBOARD_TAG }}"
 
 - name: Edit the dashboard yaml
-  local_action: "replace regexp='      targetPort: 8443' replace='      targetPort: 8443\\n      nodePort: 30443\\n  type: NodePort' path=/tmp/dashboard/src/deploy/recommended/kubernetes-dashboard.yaml"
-  when: "not HAS_LB"
+  local_action: "replace regexp='      targetPort: 8443' replace='      targetPort: 8443\\n      nodePort: 30443\\n  type: NodePort' path=/tmp/dashboard/aio/deploy/recommended.yaml"
+  when: "LOAD_BALANCING is not defined"
 
-- name: clone heapster git to /tmp
-  local_action: "script clone-from-github.sh kubernetes heapster {{ GIT_HEAPSTER_TAG }}"
-
-- name: Edit grafana yaml
-  local_action: "replace regexp='^( *)# *type: *NodePort' replace='\\1type: NodePort' path=/tmp/heapster/deploy/kube-config/influxdb/grafana.yaml"
-  when: "not HAS_LB"
+- name: clone metrics-server git to /tmp
+  local_action: "script clone-from-github.sh kubernetes-sigs metrics-server {{ GIT_METRICS_SERVER_TAG }}"
 
 - name: Create setup directory 
   file: path=/root/setup/dashboard state=directory
 
-- name: Copy dashboard yaml
-  copy: src=/tmp/dashboard/src/deploy/recommended/kubernetes-dashboard.yaml dest=/root/setup/dashboard/kubernetes-dashboard.yaml owner=root group=root mode=0644
+- name: Copy (dashboard) kubernetes-dashboard.yaml
+  copy: src=/tmp/dashboard/aio/deploy/recommended.yaml dest=/root/setup/dashboard/kubernetes-dashboard.yaml owner=root group=root mode=0644
 
-- name: Copy dashboard-serviceaccount.yaml
-  copy: src=dashboard-serviceaccount.yaml dest=/root/setup/dashboard/dashboard-serviceaccount.yaml owner=root group=root mode=0644
-
-- name: Copy dashboard-admin yaml
-  copy: src=dashboard-admin.yaml dest=/root/setup/dashboard/dashboard-admin.yaml owner=root group=root mode=0644
-
-- name: Copy heapster
-  synchronize: src=/tmp/heapster dest=/root/setup/dashboard/
+- name: Copy metrics-server
+  synchronize: src=/tmp/metrics-server dest=/root/setup/dashboard/
 
 - name: Add nodeSelector for mine/role=worker to dashboard, influxdb, heapster and grafana
   replace: "regexp='^( +)containers:' replace='\\1nodeSelector:\\n\\1  mine/role: worker\\n\\1containers:' path='{{ item }}'"
   with_items:
   - /root/setup/dashboard/kubernetes-dashboard.yaml
-  - /root/setup/dashboard/heapster/deploy/kube-config/influxdb/grafana.yaml
-  - /root/setup/dashboard/heapster/deploy/kube-config/influxdb/heapster.yaml
-  - /root/setup/dashboard/heapster/deploy/kube-config/influxdb/influxdb.yaml
-  - /root/setup/dashboard/heapster/deploy/kube-config/rbac/heapster-rbac.yaml
+  - /root/setup/dashboard/metrics-server/deploy/kubernetes/metrics-server-deployment.yaml
 
 - name: Install dashboard
   shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/setup/dashboard/kubernetes-dashboard.yaml
 
-- name: Install dashboard-serviceaccount
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/setup/dashboard/dashboard-serviceaccount.yaml
-
-- name: Install dashboard-admin
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/setup/dashboard/dashboard-admin.yaml
-
-- name: Install influxdb
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/setup/dashboard/heapster/deploy/kube-config/influxdb/
-
-- name: Install heapster
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/setup/dashboard/heapster/deploy/kube-config/rbac/heapster-rbac.yaml
+- name: Install metrics-server
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/setup/dashboard/metrics-server/deploy/kubernetes
 
 - name: Set kubernetes dashboard replicas
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/kubernetes-dashboard
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kubernetes-dashboard deployment/kubernetes-dashboard
 
-- name: Set heapster replicas
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/heapster
+- name: Set metrics-scraper replicas
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kubernetes-dashboard deployment/dashboard-metrics-scraper
 
-- name: Set grafana replicas
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/monitoring-grafana
-
-- name: Set influxdb replicas
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/monitoring-influxdb
+- name: Set metrics-server replicas
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/metrics-server
 

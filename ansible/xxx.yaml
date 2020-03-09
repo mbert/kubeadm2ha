@@ -1,0 +1,15 @@
+#
+# Prepare the operating system for Kubernetes setup.
+#
+---
+- hosts: masters
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  tasks:
+  - name: Set metrics-scraper replicas
+    shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kubernetes-dashboard deployment/dashboard-metrics-scraper
+
+
+
+

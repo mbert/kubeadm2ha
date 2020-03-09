@@ -9,12 +9,12 @@
   any_errors_fatal: yes
   tasks:
   - import_tasks: "{{ playbook_dir }}/roles/elasticsearch/tasks/label.yaml"
-    when: "'primary-master' in group_names"
+    when: "'primary_master' in group_names"
   tags:
   - label
 
 - name: Set up Elasticsearch
-  hosts: primary-master
+  hosts: primary_master
   remote_user: root
   gather_facts: no
   any_errors_fatal: yes
@@ -24,7 +24,7 @@
   - elasticsearch
 
 - name: Set up Kibana
-  hosts: primary-master
+  hosts: primary_master
   remote_user: root
   gather_facts: no
   any_errors_fatal: yes
@@ -34,7 +34,7 @@
   - kibana
 
 - name: Set up Fluentd
-  hosts: primary-master
+  hosts: primary_master
   remote_user: root
   gather_facts: no
   any_errors_fatal: yes

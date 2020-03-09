@@ -3,21 +3,12 @@
 #
 ---
 
-- name: Generate configuraton file
+- name: Generate service configuraton file
   template: src=nginx.conf.j2 dest=/etc/nginx/nginx.conf
 
-- name: Generate configuraton file
+- name: Generate static pod configuraton file directory
+  file: path=/etc/kubernetes/manifests state=directory
+
+- name: Generate static pod configuraton file
   template: src=nginx.yaml.j2 dest=/etc/kubernetes/manifests/nginx.yaml
-
-- name: Get current kube-proxy settings
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl get -n kube-system configmap/kube-proxy -o yaml >/tmp/kube-proxy-cm.yaml
-  when: "'primary-master' in group_names"
-
-- name: Edit current kube-proxy settings
-  replace: "regexp='server: *https://.*:6443' replace='server: https://{{ MASTER_VIP }}:8443' path='/tmp/kube-proxy-cm.yaml'"
-  when: "'primary-master' in group_names"
-
-- name: Apply edited kube-proxy settings
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /tmp/kube-proxy-cm.yaml --force
-  when: "'primary-master' in group_names"
 

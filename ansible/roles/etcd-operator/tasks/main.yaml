@@ -8,8 +8,8 @@
 - name: Copy etcd-operator git to primary master
   synchronize: "src=/tmp/etcd-operator dest=/root/setup/"
 
-- name: Add nodeSelector for mine/role=worker
-  replace: "regexp='^( +)containers:' replace='\\1nodeSelector:\\n\\1  mine/role: worker\\n\\1containers:' path='/root/setup/etcd-operator/example/deployment.yaml'"
+- name: Expand over our own deployment.yaml
+  template: "src=deployment.yaml.j2 dest=/root/setup/etcd-operator/example/deployment.yaml mode=0644"
 
 - name: Install etcd-operator
   shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; cd /root/setup/etcd-operator && example/rbac/create_role.sh && kubectl create -f example/deployment.yaml"

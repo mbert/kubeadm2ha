@@ -12,7 +12,7 @@ spec:
       httpGet:
         host: localhost
         path: /healthz
-        port: 8443
+        port: {{ APISERVER_LB_PORT }}
         scheme: HTTPS
     volumeMounts:
     - mountPath: /etc/nginx/nginx.conf

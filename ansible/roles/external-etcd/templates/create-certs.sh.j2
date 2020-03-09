@@ -1,0 +1,34 @@
+#!/bin/sh
+
+errorExit() {
+	echo "*** $*" 1>&2
+	exit 1
+}
+
+HOSTS="{% for host in groups['etcd'] %}{{ hostvars[host]['ansible_default_ipv4']['address'] }}{% if not loop.last %} {% endif %}{% endfor %}"
+
+for host in ${HOSTS}; do
+	echo "Creating certificates for $host..."
+	CMD="kubeadm init phase certs etcd-server --config=/tmp/etcd/${host}/kubeadmcfg.yaml"
+	echo "$CMD"
+	$CMD || errorExit "Error in 'certs etcd-server'."
+	CMD="kubeadm init phase certs etcd-peer --config=/tmp/etcd/${host}/kubeadmcfg.yaml"
+	echo "$CMD"
+	$CMD || errorExit "Error in 'certs etcd-peer'."
+	CMD="kubeadm init phase certs etcd-healthcheck-client --config=/tmp/etcd/${host}/kubeadmcfg.yaml"
+	echo "$CMD"
+	$CMD || errorExit "Error in 'certs etcd-healthcheck-client'."
+	CMD="kubeadm init phase certs apiserver-etcd-client --config=/tmp/etcd/${host}/kubeadmcfg.yaml"
+	echo "$CMD"
+	$CMD || errorExit "Error in 'certs etcd-client'."
+	cp -Rv /etc/kubernetes/pki /tmp/etcd/${host}/ || errorExit "Error copying certs for host '${host}'."
+	# cleanup non-reusable certificates (those for the primary etcd will be restored later)
+	find /etc/kubernetes/pki -not -name ca.crt -not -name ca.key -type f -delete
+done
+
+echo "Cleaning up unneeded files for secondary etcd nodes..."
+{% for host in groups['secondary_etcds'] %}
+find /tmp/certs/{{ hostvars[host]['ansible_default_ipv4']['address'] }}/ -name ca.key -type f -delete
+{% endfor %}
+
+echo "Done."

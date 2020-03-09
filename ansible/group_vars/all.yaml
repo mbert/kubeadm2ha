@@ -5,17 +5,21 @@
 
 # Base settings
 #CLUSTER_NAME: (abstract)
-#MASTER_VIP: (abstract)
-DNS_IP: 192.168.0.20
-HAS_LB: no
+#LOAD_BALANCING: (may be undefined)
+
+APISERVER_VIP: "{{groups['apiserver_vip'][0]}}"
+APISERVER_LB_PORT: 8443
+OS_DOCKER_CGROUP_DRIVER: systemd
 HOST_ARCH: amd64
 MASTER_READY_WAIT_SEC: 30
 APISERVER_READY_WAIT_SEC: 30
+ETCD_HOSTING: "stacked" # may also be "external"
+LOAD_BALANCING: "kube-vip" # may also be "nginx"
 
 # Git tags for some artifacts.
 # Set to non-empty values to enforce the use of a particular ref rather than tip of master.
 GIT_DASHBOARD_TAG: ""
-GIT_HEAPSTER_TAG: ""
+GIT_METRICS_SERVER_TAG: ""
 GIT_ETCD_OPERATOR_TAG: ""
 GIT_PROMETHEUS_OPERATOR_TAG: ""
 
@@ -49,31 +53,29 @@ CERT_STATE: "Hamburg"
 CERT_ORG_UNIT: "Deployment"
 
 # Software versions (used by installation via package manager)
-KUBERNETES_VERSION: "1.12.0"
-KUBERNETES_DNS_VERSION: "1.14.7"
-KUBERNETES_CNI_VERSION: "0.6.0"
+KUBERNETES_VERSION: "1.17.3"
+KUBERNETES_CNI_VERSION: "0.7.5"
 KEEPALIVED_VERSION: "1.3.5"
 
 # Tags for some images
-COREDNS_TAG: "1.1.3"
+KUBE_VIP_TAG: "0.1.1"
+COREDNS_TAG: "1.6.5"
 PAUSE_TAG: "3.1"
-ETCD_TAG: "3.2.18"
-NGINX_VERSION: "1.14.0"
-ETCD_OPERATOR_TAG: "v0.9.2"
+ETCD_TAG: "3.4.3-0"
+NGINX_VERSION: "1.16.1"
+ETCD_OPERATOR_TAG: "v0.9.4"
 CONFIGMAP_RELOAD_TAG: "v0.0.1"
-PROMETHEUS_OPERATOR_TAG: "v0.22.1"
-PROMETHEUS_TAG: "v2.3.1"
+PROMETHEUS_OPERATOR_TAG: "v0.37.0"
+PROMETHEUS_TAG: "v2.16.0"
 BUSYBOX_TAG: "1.27.2"
 ELASTICSEARCH_TAG: "v5.6.4"
 ELASTICSEARCH_KUBERNETES_TAG: "6.2.3"
 CURATOR_TAG: "5.4.0"
 FLUENTD_ES_TAG: "v2.0.4"
 KIBANA_OSS_TAG: "6.2.2"
-DASHBOARD_TAG: "v1.8.3"
-#HEAPSTER_TAG: "v1.5.3"
-HEAPSTER_TAG: "v1.6.0-beta.1"
-HEAPSTER_GRAFANA_TAG: "v5.0.4"
-HEAPSTER_INFLUXDB_TAG: "v1.5.2"
+DASHBOARD_TAG: "v2.0.0-rc5"
+METRICS_SERVER_TAG: "v0.3.6"
+METRICS_SCRAPER_TAG: "v1.0.3"
 
 # Images for prefetching
 DOCKER_IMAGES: [
@@ -81,21 +83,20 @@ DOCKER_IMAGES: [
   { name: "busybox", tag: "{{ BUSYBOX_TAG }}" },
   { name: "dockerregistry.mylan.local:5000/fluentd-elasticsearch", tag: "{{ FLUENTD_ES_TAG }}" },
   { name: "docker.elastic.co/kibana/kibana-oss", tag: "{{ KIBANA_OSS_TAG }}" },
-  { name: "k8s.gcr.io/coredns", tag: "{{ COREDNS_TAG }}" },
-  { name: "k8s.gcr.io/elasticsearch", tag: "{{ ELASTICSEARCH_TAG }}" }, #???
-  { name: "k8s.gcr.io/etcd-{{ HOST_ARCH }}", tag: "{{ ETCD_TAG }}" },
-  { name: "k8s.gcr.io/fluentd-elasticsearch", tag: "{{ FLUENTD_ES_TAG }}" },
-  { name: "k8s.gcr.io/heapster-{{ HOST_ARCH }}", tag: "{{ HEAPSTER_TAG }}" },
-  { name: "k8s.gcr.io/heapster-grafana-{{ HOST_ARCH }}", tag: "{{ HEAPSTER_GRAFANA_TAG }}" },
-  { name: "k8s.gcr.io/heapster-influxdb-{{ HOST_ARCH }}", tag: "{{ HEAPSTER_INFLUXDB_TAG }}" },
-  { name: "k8s.gcr.io/kube-apiserver-{{ HOST_ARCH }}", tag: "v{{ KUBERNETES_VERSION }}" },
-  { name: "k8s.gcr.io/kube-controller-manager-{{ HOST_ARCH }}", tag: "v{{ KUBERNETES_VERSION }}" },
-  { name: "k8s.gcr.io/kube-proxy-{{ HOST_ARCH }}", tag: "v{{ KUBERNETES_VERSION }}" },
-  { name: "k8s.gcr.io/kube-scheduler-{{ HOST_ARCH }}", tag: "v{{ KUBERNETES_VERSION }}" },
-  { name: "k8s.gcr.io/kubernetes-dashboard-{{ HOST_ARCH }}", tag: "{{ DASHBOARD_TAG }}" },
-  { name: "k8s.gcr.io/pause-{{ HOST_ARCH }}", tag: "{{ PAUSE_TAG }}" },
-  { name: "k8s.gcr.io/pause", tag: "{{ PAUSE_TAG }}" },
-  { name: "nginx", tag: "{{ NGINX_VERSION }}" },
+  { name: "gcr.io/coredns", tag: "{{ COREDNS_TAG }}" },
+  { name: "gcr.io/elasticsearch", tag: "{{ ELASTICSEARCH_TAG }}" }, #???
+  { name: "gcr.io/etcd-{{ HOST_ARCH }}", tag: "{{ ETCD_TAG }}" },
+  { name: "gcr.io/fluentd-elasticsearch", tag: "{{ FLUENTD_ES_TAG }}" },
+  { name: "k8s.gcr.io/metrics-server-amd64-{{ HOST_ARCH }}", tag: "{{ METRICS_SERVER_TAG }}" },
+  { name: "kubernetesui/metrics-scraper-{{ HOST_ARCH }}", tag: "{{ METRICS_SCRAPER_TAG }}" },
+  { name: "gcr.io/kube-apiserver-{{ HOST_ARCH }}", tag: "v{{ KUBERNETES_VERSION }}" },
+  { name: "gcr.io/kube-controller-manager-{{ HOST_ARCH }}", tag: "v{{ KUBERNETES_VERSION }}" },
+  { name: "gcr.io/kube-proxy-{{ HOST_ARCH }}", tag: "v{{ KUBERNETES_VERSION }}" },
+  { name: "gcr.io/kube-scheduler-{{ HOST_ARCH }}", tag: "v{{ KUBERNETES_VERSION }}" },
+  { name: "kubernetesui/dashboard-{{ HOST_ARCH }}", tag: "{{ DASHBOARD_TAG }}" },
+  { name: "gcr.io/pause-{{ HOST_ARCH }}", tag: "{{ PAUSE_TAG }}" },
+  { name: "gcr.io/pause", tag: "{{ PAUSE_TAG }}" },
+  { name: "plndr/kube-vip", tag: "{{ KUBE_VIP_TAG }}" },
   { name: "quay.io/coreos/configmap-reload", tag: "{{ CONFIGMAP_RELOAD_TAG }}" },
   { name: "quay.io/coreos/etcd-operator", tag: "{{ ETCD_OPERATOR_TAG }}" },
   { name: "quay.io/coreos/etcd", tag: "v{{ ETCD_TAG }}" },

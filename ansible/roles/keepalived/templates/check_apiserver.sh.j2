@@ -5,8 +5,16 @@ errorExit() {
     exit 1
 }
 
+OVERRIDE_SCRIPT="`dirname "$0"`/check_override.sh"
+
+if [ -x "$OVERRIDE_SCRIPT" ]; then
+	echo "Calling '$OVERRIDE_SCRIPT'."
+	"$OVERRIDE_SCRIPT"
+	exit $?
+fi
+
 curl --silent --max-time 2 --insecure https://localhost:6443/ -o /dev/null || errorExit "Error GET https://localhost:6443/"
-if ip addr | grep -q {{ MASTER_VIP }}; then
-    curl --silent --max-time 2 --insecure https://{{ MASTER_VIP }}:6443/ -o /dev/null || errorExit "Error GET https://{{ MASTER_VIP }}:6443/"
+if ip addr | grep -q {{ APISERVER_VIP }}; then
+    curl --silent --max-time 2 --insecure https://{{ APISERVER_VIP }}:6443/ -o /dev/null || errorExit "Error GET https://{{ APISERVER_VIP }}:6443/"
 fi
 

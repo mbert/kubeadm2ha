@@ -3,28 +3,20 @@
 #
 ---
 
-#  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete pod `kubectl get pod -n kube-system | egrep '^(heapster|kubernetes-dashboard|monitoring-grafana|monitoring-influxdb)' | awk '{ print $1 }'`
+- name: Uninstall service metrics-server
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete service metrics-server
 
-- name: Uninstall service heapster
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete service heapster
+- name: Uninstall service dashboard-metrics-scraper
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kubernetes-dashboard delete service dashboard-metrics-scraper
 
-- name: Uninstall service influxdb
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete service monitoring-influxdb
+- name: Uninstall service kubernetes-dashboard
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kubernetes-dashboard delete service kubernetes-dashboard
 
-- name: Uninstall service grafana
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete service monitoring-grafana
+- name: Uninstall deployment metrics-server
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete deployment metrics-server
 
-- name: Uninstall service dashboard
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete service kubernetes-dashboard
+- name: Uninstall deployment dashboard-metrics-scraper
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kubernetes-dashboard delete deployment dashboard-metrics-scraper
 
-- name: Uninstall deployment heapster
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete deployment heapster
-
-- name: Uninstall deployment influxdb
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete deployment monitoring-influxdb
-
-- name: Uninstall deployment grafana
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete deployment monitoring-grafana
-
-- name: Uninstall deployment dashboard
-  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete deployment kubernetes-dashboard
+- name: Uninstall deployment kubernetes-dashboard
+  shell: export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kubernetes-dashboard delete deployment kubernetes-dashboard

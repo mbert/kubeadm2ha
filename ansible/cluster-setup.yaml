@@ -12,59 +12,110 @@
   tags:
   - prepare-nodes
 
-- name: Deploy etcd
+- name: Kube-VIP
+  hosts: masters
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - {role: kube-vip, when: "LOAD_BALANCING == 'kube-vip'" }
+  tags:
+  - kube-vip
+
+- name: Keepalived
+  hosts: masters
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - {role: keepalived, when: "LOAD_BALANCING == 'nginx'" }
+  tags:
+  - keepalived
+
+- name: NGINX
+  hosts: masters
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - {role: nginx, when: "LOAD_BALANCING == 'nginx'" }
+  tags:
+  - nginx
+
+- name: Deploy external etcd
   hosts: etcd
   remote_user: root
   gather_facts: yes
   any_errors_fatal: yes
   roles:
-  - etcd
+  - {role: external-etcd, when: "ETCD_HOSTING == 'external'" }
   tags:
-  - etcd
+  - external-etcd
 
-- name: HA
-  hosts: masters
+- name: Set up primary master
+  hosts: primary_master
   remote_user: root
   gather_facts: yes
   any_errors_fatal: yes
   roles:
-  - keepalived
-  tags:
-  - ha
-
-- name: Set up masters
-  hosts: masters
-  remote_user: root
-  gather_facts: yes
-  any_errors_fatal: yes
-  roles:
-  - {role: client-certs,       when: "'masters'           in group_names" }
-  - {role: primary-master,     when: "'primary-master'    in group_names" }
-  - {role: secondary-masters,  when: "'secondary-masters' in group_names" }
-  - {role: network-plugin,     when: "'primary-master'    in group_names" }
-  - {role: ha-settings,        when: "'masters'           in group_names" }
+  - primary-master
+  - network-plugin
   tags:
   - masters
+  - primary_master
 
-- name: Set up minions
-  hosts: nodes
+- name: Set up secondary masters
+  hosts: secondary_masters
   remote_user: root
   gather_facts: yes
   any_errors_fatal: yes
   roles:
-  - {role: disable-scheduling, when: "'primary-master'    in group_names" }
-  - {role: join-token,         when: "'primary-master'    in group_names" }
-  - {role: minions,            when: "'minions'           in group_names" }
-  - {role: enable-scheduling,  when: "'primary-master'    in group_names" }
+  - secondary-masters
+  - ha-settings
   tags:
+  - masters
+  - secondary_masters
+
+- name: Create join token
+  hosts: primary_master
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - join-token
+  tags:
+  - join-token
+  - minions
+
+
+- name: Join minions
+  hosts: minions
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - minions
+  tags:
+  - join-minions
   - minions
 
 - name: Label minions
   hosts: nodes
   remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - {role: label-minions, when: "'primary_master' in group_names" }
+  tags:
+  - label-minions
+  - minions
+
+- name: Create Admin Account
+  hosts: primary_master
+  remote_user: root
   gather_facts: no
   any_errors_fatal: yes
   roles:
-  - {role: label-minions,      when: "'primary-master'    in group_names" }
+  - admin-account
   tags:
-  - label
+  - admin-account

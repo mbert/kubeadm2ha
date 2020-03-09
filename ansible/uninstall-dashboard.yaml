@@ -10,7 +10,7 @@
   any_errors_fatal: yes
   tasks:
   - import_tasks: roles/dashboard/tasks/uninstall.yaml
-    when: "'primary-master' in group_names"
+    when: "'primary_master' in group_names"
   tags:
   - uninstall-dashboard
 

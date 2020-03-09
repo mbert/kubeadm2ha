@@ -8,33 +8,17 @@
   - "{{ groups['masters'] }}"
   loop_control:
     loop_var: master
-  when: "'primary-master' in group_names"
+  when: "'primary_master' in group_names"
 
 - name: Wait for secondary master to be ready
   command: "sh /tmp/wait-for-master-{{ master }}.sh"
   with_items:
-  - "{{ groups['secondary-masters'] }}"
+  - "{{ groups['secondary_masters'] }}"
   loop_control:
     loop_var: master
-  when: "'primary-master' in group_names"
+  when: "'primary_master' in group_names"
 
 - name: Set coredns replicas
   shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/coredns"
-  when: "'primary-master' in group_names"
-
-- name: Get current kube-proxy settings
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl get configmap -n kube-system kube-proxy -o yaml >/tmp/kube-proxy-cm.yaml"
-  when: "'primary-master' in group_names"
-
-- name: Edit current kube-proxy settings to use the virtual IP instead of the host IP
-  replace: "regexp='server: *https://.*:6443' replace='server: https://{{ MASTER_VIP }}:6443' path='/tmp/kube-proxy-cm.yaml'"
-  when: "'primary-master' in group_names"
-
-- name: Apply edited kube-proxy settings
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /tmp/kube-proxy-cm.yaml --force"
-  when: "'primary-master' in group_names"
-
-- name: Force restart of all kube-proxy pods
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl delete pod -n kube-system -l k8s-app=kube-proxy"
-  when: "'primary-master' in group_names"
+  when: "'primary_master' in group_names"
 

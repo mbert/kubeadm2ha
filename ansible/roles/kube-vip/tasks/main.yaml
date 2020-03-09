@@ -1,0 +1,17 @@
+#
+# Set up kube-vip cluster and load balancer
+#
+--- 
+
+- name: Create configuration directory /etc/kube-vip
+  file: path=/etc/kube-vip state=directory mode=0755
+
+- name: Create manifests directory for static pods /etc/kubernetes/manifests
+  file: path=/etc/kubernetes/manifests state=directory mode=0755
+
+- name: Create service configuration file
+  template: src=config.yaml.j2 dest=/etc/kube-vip/config.yaml
+
+- name: Create manifest for static pod
+  shell: docker run -it --rm plndr/kube-vip:{{ KUBE_VIP_TAG }} /kube-vip sample manifest | sed "s|plndr/kube-vip:'|plndr/kube-vip:{{ KUBE_VIP_TAG }}'|" | sudo tee /etc/kubernetes/manifests/kube-vip.yaml
+

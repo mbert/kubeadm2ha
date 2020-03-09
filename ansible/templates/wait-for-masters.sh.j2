@@ -17,7 +17,7 @@ while [ "$READY" != "true" ]; do
 		N=`expr $N + ${INCREMENT_SECONDS}`
 	fi
 
-{% for host in groups['masters'] %}	if kubectl get nodes | egrep -q "^{{ hostvars[host]['ansible_hostname'] }}[ \t]*Ready"; then
+{% for host in groups['masters'] %}	if kubectl get nodes | egrep -q "^{{ hostvars[host]['ansible_hostname'] }}.*[ \t]+Ready"; then
 		echo "Node {{ hostvars[host]['ansible_hostname'] }} is ready."
 	else
 		echo "Node {{ hostvars[host]['ansible_hostname'] }} is not yet ready."

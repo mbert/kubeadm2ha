@@ -10,7 +10,7 @@
 
 - name: Create script for waiting for masters
   template: src="wait-for-masters.sh.j2" dest="/tmp/wait-for-masters.sh" mode=0755
-  when: "'primary-master' in group_names"
+  when: "'primary_master' in group_names"
 
 - name: Perform upgrade sequence on all masters one by one
   include_tasks: upgrade-master.yaml

@@ -6,12 +6,12 @@
 --- 
 
 - name: Set up dashboard
-  hosts: masters
+  hosts: primary_master
   remote_user: root
   gather_facts: no
   any_errors_fatal: yes
   roles:
-  - {role: dashboard,          when: "'primary-master'    in group_names" }
+  - dashboard
   tags:
   - dashboard
 
