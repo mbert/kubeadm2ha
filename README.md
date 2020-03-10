@@ -19,7 +19,6 @@ This repository contains a set of ansible scripts to do this. There are three pl
 9. _local-access.yaml_ fetches a patched _admin.conf_ file to _/tmp/MY-CLUSTER-NAME-admin.conf_. After copying it to _~/.kube/config_ remote _kubectl_ access via V-IP / load balancer can be tested. 
 10. _uninstall-dashboard.yaml_ removes the dashboard.
 11. _uninstall-efk-stack.yaml_ removes the EFK stack including Fluentd cache and Elasticsearch data files.
-12. _cluster-upgrade.yaml_ upgrades a cluster.
 
 ## Prerequisites
 
@@ -106,90 +105,7 @@ Running the _local-access.yaml_ playbook creates a file _/tmp/<my-cluster-name>-
 
 ## Upgrading a cluster
 
-For upgrading a cluster several steps are needed:
-
-1. Find out which software versions to upgrade to.
-2. Set the ansible variables to the new software versions.
-3. Run the _cluster-images.yaml_ playbook if the cluster has no Internet access.
-4. Run the _cluster-upgrade.yaml_ playbook.
-
-**Note: Never upgrade a productive cluster without having tried it on a reference system before.**
-
-### Preparation
-
-To find out which software versions to upgrade to you will need to run a more recent version of _kubeadm_:
-
-    export VERSION=$(curl -sSL https://dl.k8s.io/release/stable.txt) # or manually specify a released Kubernetes version
-    export ARCH=amd64 # or: arm, arm64, ppc64le, s390x
-    curl -sSL https://dl.k8s.io/release/${VERSION}/bin/linux/${ARCH}/kubeadm > /tmp/kubeadm
-    chmod a+rx /tmp/kubeadm
-
-Copy this file to _/tmp_ on your primary master if necessary. Now run this command for checking prerequisites and determining the versions you'd get:
-
-    /tmp/kubeadm upgrade plan
-
-If the prerequisites are met you'll get a summary of the software versions _kubeadm_ would upgrade to, like this:
-
-    Upgrade to the latest stable version:
-
-    COMPONENT            CURRENT   AVAILABLE
-    API Server           v1.8.3    v1.9.2
-    Controller Manager   v1.8.3    v1.9.2
-    Scheduler            v1.8.3    v1.9.2
-    Kube Proxy           v1.8.3    v1.9.2
-    Kube DNS             1.14.5    1.14.7
-    Etcd                 3.2.7     3.1.11
-
-Note that upgrading _etcd_ is not supported here because we are running it externally, hence we'll have to upgrade it according to _etcd_'s upgrade instruction which is beyond scope here.
-
-We will always use the same version for the Kubernetes base software installed on your OS (_kubelet_, _kubectl_, _kubeadm_) and the self-hosted core components (API Server, Controller Manager, Scheduler, Kube Proxy).
-Hence the "v1.9.2" listed in the _kubeadm_ output will go into the `KUBERNETES_VERSION` ansible variable. Edit either _group_vars/all.yaml_ to change this globally or _group_vars/<your-environment>.yaml_ for your environment only.
-The same applies for the Kube DNS version which corresponds with the `KUBERNETES_DNS_VERSION` ansible variable.
-
-Having configured this you may now want to fetch and install the new images for your to-be-upgraded cluster, if your cluster has no internet access.
-If it has you may want to do this anyway to make the upgrade more seamless.
-
-To do so, run the following command:
-
-    ansible-playbook -f <good-number-of-concurrent-processes> -i <your-environment>.inventory cluster-images.yaml
-
-I usually set the number of concurrent processes manually because if a cluster consists of more than 5 (default) nodes picking a higher value here significantly speeds up the process.
-
-### Perform the upgrade
-
-You may want to backup _/etc/kubernetes_ on all your master machines. Do this before running the upgrade.
-
-The actual upgrade is automated. Run the following command:
-
-    ansible-playbook -f <good-number-of-concurrent-processes> -i <your-environment>.inventory cluster-upgrade.yaml
-
-See the comment above on setting the number of concurrent processes.
-
-The upgrade is not fully free of disruptions:
-
-- while _kubeadm_ applies the changes on a master, it restarts a number of services, hence they may be unavailable for a short time
-- if containers running on the minions keep local data they have to take care to rebuild it when relocated to different minions during the upgrade process (i.e. local data is ignored)
-
-If any of these is unacceptable, a fully automated upgrade process does not really make any sense because deep knowledge of the application running in a respective cluster is required to work around this.
-Hence in that case a manual upgrade process is recommended.
-
-### If you are using the NGINX load balancer
-
-After the upgrade the NGINX load balancer will not be in use. To reenable it, simply rerun the _cluster-load-balanced.yaml_ playbook.
-
-### If something goes wrong
-
-If the upgrade fails the situation afterwards depends on the phase in which things went wrong.
-
-If _kubeadm_ failed to upgrade the cluster it will try to perform a rollback. Hence if that happened on the first master, chances are pretty good that the cluster is still intact. In that case all you need is to start _docker_, _kubelet_ and _keepalived_ on the secondary masters and then uncordon them (`kubectl uncordon <secondary_master-fqdn>`) to be back where you started from.
-
-If _kubeadm_ on one of the secondary masters failed you still have a working, upgraded cluster, but without the secondary masters in a somewhat undefined condition. In some cases _kubeadm_ fails if the cluster is still busy after having upgraded the previous master node, so that waiting a bit and running `kubeadm upgrade apply v<VERSION>` may even succeed. Otherwise you will have to find out what went wrong and join the secondaries manually. Once this has been done, finish the automatic upgrade process by processing the second half of the playbook only:
-
-    ansible-playbook -f <good-number-of-concurrent-processes> -i <your-environment>.inventory cluster-upgrade.yaml --tags nodes
-
-If upgrading the software packages (i.e. the second half of the playbook) failed, you still have a working cluster. You may try to fix the problems and continue manually. See the _.yaml_ files under _roles/upgrade-nodes/tasks_ for what you need to do.
-
-If you are trying out the upgrade on a reference system, you may have to downgrade at some point to start again. See the sequence for reinstalling a cluster below for an instruction how to do this (hint: it is important to erase the some base software packages before setting up a new cluster based on a lower Kubernetes version).
+Here used to be a section about upgrading clusters. It will hopefully be back here in the near future. For now it is something that is being worked on.
 
 ## Examples
 
