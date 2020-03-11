@@ -8,7 +8,7 @@
   when: "master == inventory_hostname"
 
 - name: Perform upgrade with retries on master
-  command: "/root/upgrade-with-retries.sh"
+  shell: "/root/upgrade-with-retries.sh 2>&1 | tee /tmp/upgrade.log; exit ${PIPESTATUS[0]}"
   when: "master == inventory_hostname"
 
 - name: Create script for waiting for master

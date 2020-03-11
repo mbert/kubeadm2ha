@@ -1,0 +1,46 @@
+#!/bin/bash
+
+errorExit() {
+	echo "*** $*" 1>&2
+	exit 1
+}
+
+export KUBECONFIG=/etc/kubernetes/admin.conf
+
+NODE_NAME="`kubectl get node | awk '{ print $1 }' | grep '^{{ ansible_hostname }}'`"
+test -n "$NODE_NAME" || errorExit "Error determining node name for '{{ ansible_hostname }}'."
+
+CMD="kubectl drain $NODE_NAME --ignore-daemonsets"
+echo "$CMD"
+$CMD || errorExit "Error drain."
+
+{% if 'primary_master' in group_names %}
+
+CMD="kubeadm upgrade plan"
+echo "$CMD"
+$CMD || errorExit "Error, kubeadm upgrade plan was not successful."
+
+CMD="kubeadm upgrade apply -y v{{ KUBERNETES_VERSION }}"
+
+{% else %}
+
+CMD="kubeadm upgrade node"
+
+{% endif %}
+
+SLEEP_TIME=30
+MAX_IT=5
+for i in `seq 1 $MAX_IT`; do
+	if ( echo "$CMD"; $CMD ); then
+		CMD="kubectl uncordon $NODE_NAME"
+		echo "$CMD"
+		$CMD || errorExit "Error uncordon."
+		exit 0
+	elif [ "$i" -lt $MAX_IT ]; then
+		echo "Upgrade was unsuccessful, waiting 30s and retrying."
+		sleep ${SLEEP_TIME}s
+		SLEEP_TIME=`expr $SLEEP_TIME \* 2`
+	fi
+done
+
+errorExit "Upgrade was unsuccessful after ${MAX_IT} attempts. Giving up."
