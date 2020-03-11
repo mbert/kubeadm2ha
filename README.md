@@ -22,7 +22,7 @@ This repository contains a set of ansible scripts to do this. There are three pl
 
 Due to the frequent upgrades to both Kubernetes and _kubeadm_, these scripts cannot support all possible versions. For both, fresh installs and upgrades, please refer to the value of `KUBERNETES_VERSION` in _ansible/group_vars/all.yaml_ to find out which target version has been used for developing them. Other versions may work, too, but you may turn out to be the first to try this. Please refer to the following documents for compatibility information:
 - [https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/)
-- [https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/] (https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)
+- [https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)
 
 ## Prerequisites
 

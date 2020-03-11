@@ -17,7 +17,7 @@
     register: KUBECTL_VERSION
     when: "'primary_master' in group_names and NETWORK_PLUGIN == 'weavenet'"
   - name: Generate script for registering names and versions of images to pull
-    local_action: template mode=0755 src="{{ playbook_dir }}/roles/primary_master/templates/get-{{ NETWORK_PLUGIN }}-image-specs.sh.j2" dest="/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh"
+    local_action: template mode=0755 src="{{ playbook_dir }}/roles/primary-master/templates/get-{{ NETWORK_PLUGIN }}-image-specs.sh.j2" dest="/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh"
     when: "'primary_master' in group_names"
   - name: Register names and versions of images to pull
     local_action: command "/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh"
@@ -49,7 +49,7 @@
     register: KUBECTL_VERSION
     when: "'primary_master' in group_names and NETWORK_PLUGIN == 'weavenet'"
   - name: Generate script for registering names and versions of images to pull
-    local_action: template mode=0755 src="{{ playbook_dir }}/roles/primary_master/templates/get-{{ NETWORK_PLUGIN }}-image-specs.sh.j2" dest="/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh"
+    local_action: template mode=0755 src="{{ playbook_dir }}/roles/primary-master/templates/get-{{ NETWORK_PLUGIN }}-image-specs.sh.j2" dest="/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh"
     when: "'primary_master' in group_names"
   - name: Register names and versions of images to pull
     local_action: command "/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh"
