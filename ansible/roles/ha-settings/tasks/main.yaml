@@ -22,3 +22,7 @@
   shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/coredns"
   when: "'primary_master' in group_names"
 
+- name: Remove override script to primary master (keepalived only)
+  file: path=/etc/keepalived/check_override.sh state=absent
+  when: "'primary_master' in group_names and LOAD_BALANCING == 'nginx'"
+

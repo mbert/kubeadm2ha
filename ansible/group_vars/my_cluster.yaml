@@ -6,3 +6,4 @@
 CLUSTER_NAME: md-kubernetes
 #NETWORK_PLUGIN: flannel
 NETWORK_PLUGIN: weavenet
+LOAD_BALANCING: "nginx"

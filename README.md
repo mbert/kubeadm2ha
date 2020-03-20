@@ -210,7 +210,7 @@ Sequence for reinstalling a cluster:
 
 This is a preview in order to obtain early feedback. It is not done yet. Known limitations are:
 
-- There could be more error checking.
+- In some clusters joining the first secondary master will fail when using the keepalived/nginx option. This seems to be a timing issue expected to be fixed in Kubernetes 1.18.0.
 - The code has been tested almost exclusively in a Redhat-like (RHEL) environment. More testing on other distros is needed.
 
 ## Why is there no release yet?

@@ -33,10 +33,6 @@
 - name: Generate /tmp/join-secondary-master.sh
   script: create-join-secondary-master-script.sh /tmp/kubeadm-init.out /tmp/join-secondary-master.sh
 
-- name: Remove override script to primary master (keepalived only)
-  file: path=/etc/keepalived/check_override.sh state=absent
-  when: "LOAD_BALANCING == 'nginx'"
-
 - name: Fetch /tmp/join-secondary-master.sh
   fetch: src=/tmp/join-secondary-master.sh dest=/tmp/ flat=yes
 

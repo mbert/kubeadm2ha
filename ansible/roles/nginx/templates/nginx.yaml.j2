@@ -5,7 +5,7 @@ metadata:
   namespace: kube-system
 spec:
   containers:
-  - image: nginx:{{ NGINX_VERSION }}
+  - image: nginx:{{ NGINX_TAG }}
     name: nginx
     livenessProbe:
       failureThreshold: 8

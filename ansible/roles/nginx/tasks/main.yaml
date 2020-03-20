@@ -2,6 +2,8 @@
 # Configure NGINX for the masters.
 #
 ---
+- name: Create configuration directory
+  file: path=/etc/nginx state=directory owner=root mode=0755
 
 - name: Generate service configuraton file
   template: src=nginx.conf.j2 dest=/etc/nginx/nginx.conf

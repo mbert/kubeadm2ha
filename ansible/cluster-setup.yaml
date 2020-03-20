@@ -75,7 +75,7 @@
   - masters
   - secondary-masters
 
-- name: Set up secondary masters
+- name: Make some adjustments for HA
   hosts: masters
   remote_user: root
   gather_facts: yes

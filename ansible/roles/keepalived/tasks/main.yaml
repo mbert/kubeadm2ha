@@ -2,8 +2,8 @@
 # Configure keepalived for the masters.
 #
 ---
-- name: Install required packages from EPEL repo (only for masters)
-  yum: state=present disable_gpg_check=yes enablerepo=epel,ol7_preview name=keepalived-{{ KEEPALIVED_VERSION }} allow_downgrade=yes
+- name: Create configuration directory
+  file: path=/etc/keepalived state=directory owner=root mode=0755
 
 - name: Copy check script
   template: src=check_apiserver.sh.j2 dest=/etc/keepalived/check_apiserver.sh owner=root group=root mode=0755
@@ -15,5 +15,8 @@
   copy: src=check_override.sh dest=/etc/keepalived/check_override.sh mode=0755 owner=root group=root
   when: "'primary_master' in group_names"
 
-- name: Enable and start keepalived
-  service: name=keepalived enabled=yes state=restarted
+- name: Generate static pod configuraton file directory
+  file: path=/etc/kubernetes/manifests state=directory
+
+- name: Generate static pod configuraton file
+  template: src=keepalived.yaml.j2 dest=/etc/kubernetes/manifests/keepalived.yaml
