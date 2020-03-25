@@ -13,4 +13,5 @@ NTP_SERVER: 172.16.8.250
 #NFS_SHARE: /var/nfsshare
 #NFS_MOUNT: /var/kubernetes
 SETUP_DOCKER: true
-LOAD_BALANCING: "nginx"
+LOAD_BALANCING: "haproxy"
+VIP_MANAGER: "keepalived"

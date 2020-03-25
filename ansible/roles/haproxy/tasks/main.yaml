@@ -1,0 +1,16 @@
+#
+# Configure NGINX for the masters.
+#
+---
+- name: Create configuration directory
+  file: path=/etc/haproxy state=directory owner=root mode=0755
+
+- name: Generate service configuraton file
+  template: src=haproxy.cfg.j2 dest=/etc/haproxy/haproxy.cfg
+
+- name: Generate static pod configuraton file directory
+  file: path=/etc/kubernetes/manifests state=directory
+
+- name: Generate static pod configuraton file
+  template: src=haproxy.yaml.j2 dest=/etc/kubernetes/manifests/haproxy.yaml
+

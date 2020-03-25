@@ -40,11 +40,11 @@ In order to use the ansible scripts, at least two files need to be configured:
 
 1. Either edit _my-cluster.inventory_ or create your own. The inventory _must_ define the following groups: 
  _primary_master_ (a single machine on which _kubeadm_ will be run), _secondary_masters_ (the other masters), _masters_ (all masters), _minions_ (the worker nodes), _nodes_ (all nodes), _etcd_ (all machines on which etcd is installed, usually the masters).
-2. Either edit _group_vars/my_cluster.yaml_ to your needs or create your own (named after the group defined in the inventory you want to use). Override settings from _group_vars/all.yaml_ where necessary. You may decide to change some of the defaults for your environment: `LOAD_BALANCING` (`kube-vip` or `nginx`), `NETWORK_PLUGIN` (`weavenet`, `flannel` or `calico`) and `ETCD_HOSTING` (`stacked` if running on the masters, else `external`).
+2. Either edit _group_vars/my_cluster.yaml_ to your needs or create your own (named after the group defined in the inventory you want to use). Override settings from _group_vars/all.yaml_ where necessary. You may decide to change some of the defaults for your environment: `VIP_MANAGER` (`kube-vip` or `keepalived`) `LOAD_BALANCING` (`kube-vip`, `haproxy` or `nginx`), `NETWORK_PLUGIN` (`weavenet`, `flannel` or `calico`) and `ETCD_HOSTING` (`stacked` if running on the masters, else `external`).
 
 ## What the cluster setup does
 1. Set up an _etcd_ cluster with self-signed certificates on all hosts in group _etcd._.
-2. Set up a virtual IP and load balancing: either using a static pod for _kube-vip_ or a _keepalived_ cluster on all hosts in group _masters_.
+2. Set up a virtual IP and load balancing: either using a static pod for _kube-vip_ or a _keepalived_ cluster with _nginx_ on all hosts in group _masters_.
 3. Set up a master instance on the host in group _primary_master_ using _kubeadm._
 4. Set up master instances on all hosts in group _secondary_masters_ by copying and patching (replace the primary master's host name and IP) the configuration created by _kubeadm_ and have them join the cluster.
 5. Use _kubeadm_ to join all hosts in the group _minions_. 
@@ -210,7 +210,7 @@ Sequence for reinstalling a cluster:
 
 This is a preview in order to obtain early feedback. It is not done yet. Known limitations are:
 
-- In some clusters joining the first secondary master will fail when using the keepalived/nginx option. This seems to be a timing issue expected to be fixed in Kubernetes 1.18.0.
+- In some clusters joining secondary masters fails with EOF when uploading configmaps when _nginx_ is used as a load balancer. For now, please use _haproxy_ or _kube-vip_ instead.
 - The code has been tested almost exclusively in a Redhat-like (RHEL) environment. More testing on other distros is needed.
 
 ## Why is there no release yet?

@@ -14,7 +14,8 @@ HOST_ARCH: amd64
 MASTER_READY_WAIT_SEC: 30
 APISERVER_READY_WAIT_SEC: 30
 ETCD_HOSTING: "stacked" # may also be "external"
-LOAD_BALANCING: "kube-vip" # may also be "nginx"
+LOAD_BALANCING: "kube-vip" # may also be "nginx" or "haproxy"
+VIP_MANAGER: "kube-vip" # may also be "keepalived"
 
 # Git tags for some artifacts.
 # Set to non-empty values to enforce the use of a particular ref rather than tip of master.
@@ -62,6 +63,7 @@ COREDNS_TAG: "1.6.5"
 PAUSE_TAG: "3.1"
 KEEPALIVED_TAG: "1.3.5-1"
 NGINX_TAG: "1.16.1"
+HAPROXY_TAG: "2.1.3-alpine"
 ETCD_TAG: "3.4.3"
 ETCD_OPERATOR_TAG: "v0.9.4"
 CONFIGMAP_RELOAD_TAG: "v0.0.1"
@@ -95,6 +97,7 @@ DOCKER_IMAGES: [
   { name: "k8s.gcr.io/pause-{{ HOST_ARCH }}", tag: "{{ PAUSE_TAG }}" },
   { name: "osixia/keepalived", tag: "{{ KEEPALIVED_TAG }}" },
   { name: "nginx", tag: "{{ NGINX_TAG }}" },
+  { name: "haproxy", tag: "{{ HAPROXY_TAG }}" },
   { name: "kubernetesui/metrics-scraper-{{ HOST_ARCH }}", tag: "{{ METRICS_SCRAPER_TAG }}" },
   { name: "kubernetesui/dashboard-{{ HOST_ARCH }}", tag: "{{ DASHBOARD_TAG }}" },
   { name: "plndr/kube-vip", tag: "{{ KUBE_VIP_TAG }}" },

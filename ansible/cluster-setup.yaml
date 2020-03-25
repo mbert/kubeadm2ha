@@ -28,7 +28,7 @@
   gather_facts: yes
   any_errors_fatal: yes
   roles:
-  - {role: keepalived, when: "LOAD_BALANCING == 'nginx'" }
+  - {role: keepalived, when: "VIP_MANAGER == 'keepalived'" }
   tags:
   - keepalived
 
@@ -41,6 +41,16 @@
   - {role: nginx, when: "LOAD_BALANCING == 'nginx'" }
   tags:
   - nginx
+
+- name: HAProxy
+  hosts: masters
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - {role: haproxy, when: "LOAD_BALANCING == 'haproxy'" }
+  tags:
+  - haproxy
 
 - name: Deploy external etcd
   hosts: etcd
