@@ -21,7 +21,7 @@ interface: {{ ansible_default_ipv4.interface }}
 loadBalancers:
 - name: API Server Load Balancer
   type: tcp
-  port: 8443
+  port: {{ APISERVER_LB_PORT }}
   bindToVip: false
   backends:
 {% for host in groups['masters'] %}
