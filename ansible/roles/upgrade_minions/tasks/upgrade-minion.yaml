@@ -1,0 +1,33 @@
+#
+# Perform the upgrade sequence on one minion: 
+# - drain the node the brutal way (i.e. no local data is preserved, daemonsets ignored)
+# - shut down kubernetes services
+# - upgrade software
+# - start kubernetes services
+# - uncordon the node
+#
+---
+
+- name: Drain minion node
+  ansible.builtin.script: "drain-uncordon-node.sh drain {{ hostvars[minion]['ansible_hostname'] }}"
+  when: "'primary_master' in group_names"
+
+- name: Perform upgrade on minion
+  ansible.builtin.command: "kubeadm upgrade node"
+  when: "minion == inventory_hostname"
+
+- name: Upgrade software
+  ansible.builtin.package: name={{ item }} state=present
+  with_items:
+  - kubelet-{{ KUBERNETES_VERSION }}
+  - kubectl-{{ KUBERNETES_VERSION }}
+  - kubernetes-cni-{{ KUBERNETES_CNI_VERSION }}
+  when: "minion == inventory_hostname"
+
+- name: Restart kubelet
+  ansible.builtin.systemd: name=kubelet daemon_reload=true state=restarted 
+  when: "minion == inventory_hostname"
+
+- name: Uncordon minion node
+  ansible.builtin.script: "drain-uncordon-node.sh uncordon {{ hostvars[minion]['ansible_hostname'] }}"
+  when: "'primary_master' in group_names"

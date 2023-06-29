@@ -1,0 +1,21 @@
+#
+# Prepare node (i.e. set up and fix some files)
+#
+---
+
+- name: Make sure some needed software is installed via package manager
+  ansible.builtin.package: "name={{ item }} state=present"
+  with_items:
+  - perl
+  - kubelet-{{ KUBERNETES_VERSION }}
+  - kubectl-{{ KUBERNETES_VERSION }}
+  - kubeadm-{{ KUBERNETES_VERSION }}
+  - kubernetes-cni-{{ KUBERNETES_CNI_VERSION }}
+
+- name: Enable kubelet
+  ansible.builtin.service: "name=kubelet enabled=yes"
+
+- name: Create setup directory 
+  ansible.builtin.file: "path=/root/setup state=directory mode=0755"
+  when: "'primary_master' in group_names"
+

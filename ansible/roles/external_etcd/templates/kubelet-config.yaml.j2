@@ -1,0 +1,11 @@
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: {{OS_DOCKER_CGROUP_DRIVER}}
+address: 127.0.0.1
+staticPodPath: /etc/kubernetes/manifests
+containerRuntimeEndpoint: unix:///var/run/containerd/containerd.sock
+authentication:
+  webhook:
+    enabled: false
+authorization:
+  mode: AlwaysAllow

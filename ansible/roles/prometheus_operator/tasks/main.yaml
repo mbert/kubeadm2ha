@@ -1,0 +1,15 @@
+#
+# Set up prometheus-operator
+#
+---
+
+- name: Copy prometheus RBAC setup to primary master
+  ansible.builtin.copy: "src=setup-rbac-prometheus.yaml dest=/root/setup mode=0644"
+
+- name: Install prometheus-operator
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl create -f {{ PROMETHEUS_OPERATOR_INSTALL_URL }}" # noqa no-changed-when
+
+- name: Install prometheus-operator service account and cluster role binding
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl create -f /root/setup/setup-rbac-prometheus.yaml" # noqa no-changed-when
+
+

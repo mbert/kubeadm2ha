@@ -2,11 +2,11 @@
 192.168.0.50
 
 [primary_master]
-md-kubernetes-master-1 ansible_ssh_host=192.168.0.51
+kubernetes-master-1 ansible_ssh_host=192.168.0.51
 
 [secondary_masters]
-md-kubernetes-master-2 ansible_ssh_host=192.168.0.52
-md-kubernetes-master-3 ansible_ssh_host=192.168.0.53
+kubernetes-master-2 ansible_ssh_host=192.168.0.52
+kubernetes-master-3 ansible_ssh_host=192.168.0.53
 
 [masters:children]
 primary_master
@@ -23,30 +23,30 @@ primary_etcd
 secondary_etcds
 
 [elasticsearch_hot]
-md-kubernetes-minion-4 ansible_ssh_host=192.168.0.180
-#md-kubernetes-minion-5 ansible_ssh_host=192.168.0.181
-#md-kubernetes-minion-6 ansible_ssh_host=192.168.0.186
+#kubernetes-minion-4 ansible_ssh_host=192.168.0.180
+#kubernetes-minion-5 ansible_ssh_host=192.168.0.181
+#kubernetes-minion-6 ansible_ssh_host=192.168.0.186
 
 [elasticsearch_warm]
-md-kubernetes-minion-5 ansible_ssh_host=192.168.0.181
-#md-kubernetes-minion-6 ansible_ssh_host=192.168.0.186
-#md-kubernetes-minion-7 ansible_ssh_host=192.168.0.188
+#kubernetes-minion-5 ansible_ssh_host=192.168.0.181
+#kubernetes-minion-6 ansible_ssh_host=192.168.0.186
+#kubernetes-minion-7 ansible_ssh_host=192.168.0.188
 
 [elasticsearch:children]
 elasticsearch_hot
 elasticsearch_warm
 
 [workers]
-md-kubernetes-minion-1 ansible_ssh_host=192.168.0.56
-md-kubernetes-minion-2 ansible_ssh_host=192.168.0.57
-md-kubernetes-minion-3 ansible_ssh_host=192.168.0.58
+kubernetes-minion-1 ansible_ssh_host=192.168.0.56
+kubernetes-minion-2 ansible_ssh_host=192.168.0.57
+kubernetes-minion-3 ansible_ssh_host=192.168.0.58
 
 [minions:children]
 elasticsearch
 workers
 
 [nfs_server]
-md-kubernetes-nfs ansible_ssh_host=192.168.0.55
+#kubernetes-nfs ansible_ssh_host=192.168.0.55
 
 [nodes:children]
 masters

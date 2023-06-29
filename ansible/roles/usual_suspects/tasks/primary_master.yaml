@@ -1,0 +1,15 @@
+#
+# Check preconditions on the primary master.
+#
+---
+- name: Make sure the primary master has passwordless ssh access to all other masters
+  ansible.builtin.command: "ssh -o PasswordAuthentication=no -o StrictHostKeyChecking=no {{ item }} /bin/true" # noqa no-changed-when
+  loop: "{{ groups['masters'] }}"
+
+- name: Check for known-to-be-problematic configuration. Here kube-vip
+  ansible.builtin.fail: msg="Configuration problem detected - when using 'kube-vip' you need to set APISERVER_LB_PORT to '6443'."
+  when: "LOAD_BALANCING == 'kube-vip' and APISERVER_LB_PORT != 6443"
+
+- name: Check for known-to-be-problematic configuration. Here keepalived
+  ansible.builtin.fail: msg="Configuration problem detected - when not using 'kube-vip' you need to set APISERVER_LB_PORT to something not '6443'."
+  when: "LOAD_BALANCING != 'kube-vip' and APISERVER_LB_PORT == 6443"

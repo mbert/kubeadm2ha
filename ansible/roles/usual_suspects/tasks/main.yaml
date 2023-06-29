@@ -1,0 +1,9 @@
+#
+# Check preconditions on all hosts.
+#
+---
+- name: Make sure that the running containerd supports CRI (required by K8s 1.24+)
+  ansible.builtin.command: "crictl -r unix:///var/run/containerd/containerd.sock ps" # noqa no-changed-when
+
+- name: Make sure that kubelet --version does not segfault
+  ansible.builtin.command: "kubelet --version" # noqa no-changed-when

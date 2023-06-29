@@ -3,13 +3,13 @@
 #
 ---
 - name: Create directory for Kibana installation
-  file: "path=/root/setup/kibana mode=0755 state=directory"
+  ansible.builtin.file: "path=/root/setup/kibana mode=0755 state=directory"
 
 - name: Copy Kibana yaml files
-  copy: "src={{ item }} dest=/root/setup/kibana/"
+  ansible.builtin.copy: "src={{ item }} dest=/root/setup/kibana/ mode=0644"
   with_items:
   - kibana-deployment.yaml
   - kibana-service.yaml
 
 - name: Install Kibana
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl create -f /root/setup/kibana/"
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl create -f /root/setup/kibana/" # noqa no-changed-when

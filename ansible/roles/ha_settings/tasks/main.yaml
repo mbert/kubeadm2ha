@@ -1,0 +1,28 @@
+#
+# Apply settings on the redundant masters.
+#
+---
+- name: Create script for waiting for secondary masters
+  ansible.builtin.template: "src=wait-for-single-master.sh.j2 dest=/tmp/wait-for-master-{{ master }}.sh mode=0755"
+  with_items:
+  - "{{ groups['masters'] }}"
+  loop_control:
+    loop_var: master
+  when: "'primary_master' in group_names"
+
+- name: Wait for secondary master to be ready
+  ansible.builtin.command: "sh /tmp/wait-for-master-{{ master }}.sh"
+  with_items:
+  - "{{ groups['secondary_masters'] }}"
+  loop_control:
+    loop_var: master
+  when: "'primary_master' in group_names"
+
+- name: Set coredns replicas
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/coredns"
+  when: "'primary_master' in group_names"
+
+- name: Remove override script to primary master (keepalived only)
+  ansible.builtin.file: path=/etc/keepalived/check_override.sh state=absent
+  when: "'primary_master' in group_names and LOAD_BALANCING == 'nginx'"
+

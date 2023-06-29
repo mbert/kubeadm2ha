@@ -1,0 +1,176 @@
+#
+# Playbook to set up a Kubernetes cluster.
+#
+--- 
+- name: Check preconditions on primary master
+  hosts: primary_master
+  remote_user: root
+  gather_facts: no
+  any_errors_fatal: yes
+  tasks:
+  - name: Checking primary master...
+    ansible.builtin.include_tasks: "{{ playbook_dir }}/roles/usual_suspects/tasks/primary_master.yaml"
+  tags:
+  - precon_primary_master
+  - setup_system
+
+- name: Prepare Nodes
+  hosts: nodes
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - prepare_nodes
+  tags:
+  - prepare_nodes
+  - setup_system
+
+- name: Check preconditions on all nodes
+  hosts: nodes
+  remote_user: root
+  gather_facts: no
+  any_errors_fatal: yes
+  roles:
+  - usual_suspects
+  tags:
+  - usual_suspects
+  - setup_system
+
+- name: Kube-VIP
+  hosts: masters
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - {role: kube_vip, when: "LOAD_BALANCING == 'kube-vip'" }
+  tags:
+  - kube_vip
+  - setup_infrastructure
+
+- name: Keepalived
+  hosts: masters
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - {role: keepalived, when: "LOAD_BALANCING != 'kube-vip'" }
+  tags:
+  - keepalived
+  - setup_infrastructure
+
+- name: NGINX
+  hosts: masters
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - {role: nginx, when: "LOAD_BALANCING == 'nginx'" }
+  tags:
+  - nginx
+  - setup_infrastructure
+
+- name: HAProxy
+  hosts: masters
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - {role: haproxy, when: "LOAD_BALANCING == 'haproxy'" }
+  tags:
+  - haproxy
+  - setup_infrastructure
+
+- name: Deploy external etcd
+  hosts: etcd
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - {role: external_etcd, when: "ETCD_HOSTING == 'external'" }
+  tags:
+  - external_etcd
+  - setup_k8s
+
+- name: Gather facts for etcd hosts
+  hosts: etcd
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  tags:
+  - masters
+  - primary_master
+  - setup_k8s
+
+- name: Set up primary master
+  hosts: primary_master
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - primary_master
+  - network_plugin
+  tags:
+  - masters
+  - primary_master
+  - setup_k8s
+
+- name: Set up secondary masters
+  hosts: secondary_masters
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - secondary_masters
+  tags:
+  - masters
+  - secondary_masters
+  - setup_k8s
+
+- name: Make some adjustments for HA
+  hosts: masters
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - ha_settings
+  tags:
+  - ha_settings
+  - masters
+  - setup_k8s
+
+- name: Create join token
+  hosts: primary_master
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - join_token
+  tags:
+  - join_token
+  - minions
+  - setup_k8s
+
+- name: Join minions
+  hosts: minions
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - minions
+  tags:
+  - join-minions
+  - minions
+  - setup_k8s
+
+- name: Label minions
+  hosts: nodes
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - {role: label_minions, when: "'primary_master' in group_names" }
+  tags:
+  - label_minions
+  - minions
+  - setup_k8s
+

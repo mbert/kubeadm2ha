@@ -1,0 +1,12 @@
+#!/bin/sh
+
+errorExit() {
+	echo "*** $*" 1>&2
+	exit 1
+}
+
+wget -q -O /tmp/flannel.yaml '{{ WEAVENET_YAML_URL }}'
+
+grep -E '^[ \t]*image:' /tmp/flannel.yaml  | sed 's/.*image: *//' | tr -d "'" | tr -d '"' | sort -u
+
+rm -f /tmp/flannel.yaml

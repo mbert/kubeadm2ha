@@ -1,9 +1,0 @@
-#
-# Get a new join token from the primary master in order to add worker nodes.
-#
----
-- name: Generate a join token
-  shell: "(/bin/echo -e '#!/bin/sh\n\nrm -f /etc/kubernetes/kubelet.conf\n'; kubeadm token create --print-join-command) >/tmp/join-worker-node.sh"
-
-- name: Fetch script with generated command line for adding worker nodes
-  fetch: src=/tmp/join-worker-node.sh dest=/tmp/ flat=yes

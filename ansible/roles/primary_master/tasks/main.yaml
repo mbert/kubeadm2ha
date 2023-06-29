@@ -1,0 +1,41 @@
+#
+# Initialise primary master
+#
+---
+
+- name: Generate 'kubeadm' configuration file (external etcd only)
+  ansible.builtin.template: "src=kubeadm-init.yaml.j2 dest=/root/kubeadm-init.yaml mode=0644"
+
+- name: Remove /etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf on primary master (external etcd only)
+  ansible.builtin.file: "path=/etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf state=absent"
+  when: "ETCD_HOSTING == 'external'"
+
+- name: Stop kubelet on primary master
+  ansible.builtin.service: "name=kubelet state=stopped"
+
+- name: Remove /etc/kubernetes/admin.conf if it (still) exists
+  ansible.builtin.file: "path=/etc/kubernetes/admin.conf state=absent"
+
+- name: Disable preflight check for existing etcd manifest (only for external ETCD)
+  ansible.builtin.set_fact: KUBEADM_PREFLIGHT_DISABLE="--ignore-preflight-errors=FileAvailable--etc-kubernetes-manifests-etcd.yaml"
+  when: "ETCD_HOSTING == 'external'"
+
+- name: Run 'kubeadm init --upload-certs'
+  ansible.builtin.shell: "set -o pipefail; kubeadm init --config=/root/kubeadm-init.yaml --upload-certs {{ KUBEADM_PREFLIGHT_DISABLE | default('') }} 2>&1 | tee /tmp/kubeadm-init.out" # noqa no-changed-when
+
+- name: Archive /etc/kubernetes/pki/[cs]a.* (external etcd only)
+  ansible.builtin.archive: "path=/etc/kubernetes/pki/[cs]a.*,/etc/kubernetes/pki/front-proxy-ca.crt,/etc/kubernetes/pki/front-proxy-ca.key dest=/tmp/master-certs.tar.gz mode=0644"
+  when: "ETCD_HOSTING == 'external'"
+
+- name: Fetch /tmp/master-certs.tar.gz (external etcd only)
+  ansible.builtin.fetch: src=/tmp/master-certs.tar.gz dest=/tmp/ flat=yes
+  when: "ETCD_HOSTING == 'external'"
+
+- name: Generate /tmp/join-secondary-master.sh
+  ansible.builtin.script: create-join-secondary-master-script.sh /tmp/kubeadm-init.out /tmp/join-secondary-master.sh
+
+- name: Fetch /tmp/join-secondary-master.sh
+  ansible.builtin.fetch: src=/tmp/join-secondary-master.sh dest=/tmp/ flat=yes
+
+
+

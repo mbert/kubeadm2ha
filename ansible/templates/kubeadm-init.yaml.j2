@@ -1,0 +1,23 @@
+kind: ClusterConfiguration
+apiVersion: kubeadm.k8s.io/v1beta3
+kubernetesVersion: v{{ KUBERNETES_VERSION }}
+controlPlaneEndpoint: "{{ APISERVER_VIP }}:{{ APISERVER_LB_PORT }}"
+{% if ETCD_HOSTING == 'external' %}
+etcd:
+    external:
+        endpoints:
+{% for host in groups['etcd'] %}
+        - https://{{ hostvars[host]['ansible_default_ipv4']['address'] }}:2379
+{% endfor %}
+        caFile: /etc/kubernetes/pki/etcd/ca.crt
+        certFile: /etc/kubernetes/pki/apiserver-etcd-client.crt
+        keyFile: /etc/kubernetes/pki/apiserver-etcd-client.key
+{% endif %}
+{% if POD_NETWORK_CIDR is defined %}
+networking:
+  podSubnet: "{{ POD_NETWORK_CIDR }}"
+{% endif %}
+---
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+cgroupDriver: {{OS_DOCKER_CGROUP_DRIVER}}

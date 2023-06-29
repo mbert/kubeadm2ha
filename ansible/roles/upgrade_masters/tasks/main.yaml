@@ -1,0 +1,32 @@
+#
+# Upgrade a cluster's masters:
+# - get and install kubeadm binary in the target version
+# - for all masters (one by one):
+#   * shut down keepalived
+#   * upgrade cluster using kubeadm
+#   * start keepalived
+#
+---
+
+- name: Make sure some needed software is installed via package manager
+  ansible.builtin.package: name=kubeadm-{{ KUBERNETES_VERSION }} state=present
+
+- name: Upgrade masters one by one
+  ansible.builtin.include_tasks: upgrade-master.yaml
+  with_items: "{{ groups['masters'] }}"
+  loop_control:
+    loop_var: master
+
+- name: Upgrade software
+  ansible.builtin.package: name={{ item }} state=present
+  with_items:
+  - kubelet-{{ KUBERNETES_VERSION }}
+  - kubectl-{{ KUBERNETES_VERSION }}
+  - kubernetes-cni-{{ KUBERNETES_CNI_VERSION }}
+
+- name: Restart kubelet
+  ansible.builtin.systemd: name=kubelet daemon_reload=true state=restarted 
+
+- name: Set coredns replicas (just in case)
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/coredns"
+  when: "'primary_master' in group_names"

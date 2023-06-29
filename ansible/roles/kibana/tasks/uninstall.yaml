@@ -3,4 +3,4 @@
 #
 ---
 - name: Uninstall Kibana
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl delete -f /root/setup/kibana/"
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl delete -f /root/setup/kibana/" # noqa no-changed-when

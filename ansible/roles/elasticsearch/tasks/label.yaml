@@ -3,13 +3,13 @@
 #
 ---
 - name: Label elasticsearch nodes as "elasticsearch-hot"
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[eshnode]['ansible_fqdn'] }} mine/role=\"elasticsearch-hot\""
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[eshnode]['ansible_fqdn'] }} mine/role=\"elasticsearch-hot\"" # noqa no-changed-when
   with_items: "{{ groups['elasticsearch_hot'] }}"
   loop_control:
     loop_var: eshnode
 
 - name: Label elasticsearch nodes as "elasticsearch-warm"
-  shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[eswnode]['ansible_fqdn'] }} mine/role=\"elasticsearch-warm\""
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[eswnode]['ansible_fqdn'] }} mine/role=\"elasticsearch-warm\"" # noqa no-changed-when
   with_items: "{{ groups['elasticsearch_warm'] }}"
   loop_control:
     loop_var: eswnode

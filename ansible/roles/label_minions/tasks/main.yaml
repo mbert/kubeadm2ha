@@ -1,0 +1,33 @@
+#
+# Labels minions as needed for particular tasks
+#
+--- 
+
+- name: Create script for waiting for masters
+  ansible.builtin.template: src="wait-for-masters.sh.j2" dest="/tmp/wait-for-masters.sh" mode=0755
+  when: "'primary_master' in group_names"
+
+- name: Create script for waiting for minions
+  ansible.builtin.template: src="wait-for-minions.sh.j2" dest="/tmp/wait-for-minions.sh" mode=0755
+  when: "'primary_master' in group_names"
+
+- name: Wait for masters
+  ansible.builtin.command: "sh /tmp/wait-for-masters.sh" # noqa no-changed-when
+  when: "'primary_master' in group_names"
+
+- name: Wait for minions
+  ansible.builtin.command: "sh /tmp/wait-for-minions.sh" # noqa no-changed-when
+  when: "'primary_master' in group_names"
+
+- name: Enable fluentd on minions
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[minion]['ansible_fqdn'] }} beta.kubernetes.io/fluentd-ds-ready=\"true\"" # noqa no-changed-when
+  with_items: "{{ groups['minions'] }}"
+  loop_control:
+    loop_var: minion
+
+- name: Label worker nodes as "worker"
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl label nodes --overwrite=true {{ hostvars[worker]['ansible_fqdn'] }} mine/role=\"worker\"" # noqa no-changed-when
+  with_items: "{{ groups['workers'] }}"
+  loop_control:
+    loop_var: worker
+

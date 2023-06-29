@@ -3,14 +3,14 @@
 #
 ---
 - name: Create configuration directory
-  file: path=/etc/haproxy state=directory owner=root mode=0755
+  ansible.builtin.file: path=/etc/haproxy state=directory owner=root mode=0755
 
 - name: Generate service configuraton file
-  template: src=haproxy.cfg.j2 dest=/etc/haproxy/haproxy.cfg
+  ansible.builtin.template: "src=haproxy.cfg.j2 dest=/etc/haproxy/haproxy.cfg mode=0644"
 
 - name: Generate static pod configuraton file directory
-  file: path=/etc/kubernetes/manifests state=directory
+  ansible.builtin.file: "path=/etc/kubernetes/manifests state=directory mode=0755"
 
 - name: Generate static pod configuraton file
-  template: src=haproxy.yaml.j2 dest=/etc/kubernetes/manifests/haproxy.yaml
+  ansible.builtin.template: "src=haproxy.yaml.j2 dest=/etc/kubernetes/manifests/haproxy.yaml mode=0644"
 

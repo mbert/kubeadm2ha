@@ -4,14 +4,15 @@
 #
 --- 
 CLUSTER_NAME: md-kubernetes
-PROXY_SERVER: http://proxy.dermalog.hh:3128
-NO_PROXY_LIST: dockerregistry,.dermalog.hh,192.168.0.0/16,jira.dc.dermalog.com
+#PROXY_SERVER: http://proxy.dermalog.hh:3128
 INSECURE_REGISTRY: dockerregistry.backend.dc.dermalog.hh:5000
-#NETWORK_PLUGIN: flannel
-NETWORK_PLUGIN: weavenet
-NTP_SERVER: 172.16.8.250
+POD_NETWORK_CIDR: 10.244.0.0/16
+NETWORK_PLUGIN: flannel
+#NETWORK_PLUGIN: calico
+#NETWORK_PLUGIN: weavenet
 #NFS_SHARE: /var/nfsshare
 #NFS_MOUNT: /var/kubernetes
 SETUP_DOCKER: true
-LOAD_BALANCING: "haproxy"
-VIP_MANAGER: "keepalived"
+#ETCD_HOSTING: "external"
+APISERVER_LB_PORT: 6443
+LOAD_BALANCING: "kube-vip"

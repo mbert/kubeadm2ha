@@ -8,17 +8,16 @@ This code largely follows the instructions published in [cookeem/kubeadm-ha](htt
 
 This repository contains a set of ansible scripts to do this. There are three playbooks:
 
-1. _cluster-setup.yaml_ sets up a complete cluster including the HA setup. See below for more details.
-2. _cluster-uninstall.yaml_ removes data and configuration files to a point that _cluster-setup.yaml_ can be used again.
-3. _cluster-dashboard.yaml_ sets up the dashboard including influxdb/grafana.
-4. _etcd-operator.yaml_ sets up the etcd-operator.
-5. _prometheus-operator.yaml_ sets up the prometheus-operator.
-6. _efk-stack.yaml_ sets up an EFK stack for centralised logging.
-7. _cluster-images.yaml_ prefetches all images needed for Kubernetes operations and transfers them to the target hosts.
-8. _local-access.yaml_ fetches a patched _admin.conf_ file to _/tmp/MY-CLUSTER-NAME-admin.conf_. After copying it to _~/.kube/config_ remote _kubectl_ access via V-IP / load balancer can be tested. 
-9. _uninstall-dashboard.yaml_ removes the dashboard.
-10. _uninstall-efk-stack.yaml_ removes the EFK stack including Fluentd cache and Elasticsearch data files.
-11. _cluster-upgrade.yaml_ upgrades a cluster.
+1. _playbook-01-cluster-setup.yaml_ sets up a complete cluster including the HA setup. See below for more details.
+2. _playbook-51-cluster-uninstall.yaml_ removes data and configuration files to a point that _cluster-setup.yaml_ can be used again.
+3. _playbook-02-dashboard.yaml_ sets up the dashboard including influxdb/grafana.
+4. _playbook-03-local-access.yaml_ creates a patched _admin.conf_ file in _/tmp/<my-cluster-name>-admin.conf_. After copying it to _~/.kube/config_ remote _kubectl_ access via V-IP / load balancer can be tested. 
+6. _playbook-04-prometheus-operator.yaml_ sets up the prometheus-operator.
+7. _playbook-05-efk-stack.yaml_ sets up an EFK stack for centralised logging.
+8. _playbook-00-cluster-images.yaml_ prefetches all images needed for Kubernetes operations and transfers them to the target hosts.
+9. _playbook-52-uninstall-dashboard.yaml_ removes the dashboard.
+10. _playbook-53-uninstall-efk-stack.yaml_ removes the EFK stack including Fluentd cache and Elasticsearch data files.
+11. _playbook-31-cluster-upgrade.yaml_ upgrades a cluster.
 
 Due to the frequent upgrades to both Kubernetes and _kubeadm_, these scripts cannot support all possible versions. For both, fresh installs and upgrades, please refer to the value of `KUBERNETES_VERSION` in _ansible/group_vars/all.yaml_ to find out which target version has been used for developing them. Other versions may work, too, but you may turn out to be the first to try this. Please refer to the following documents for compatibility information:
 - [https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/)
@@ -40,7 +39,7 @@ In order to use the ansible scripts, at least two files need to be configured:
 
 1. Either edit _my-cluster.inventory_ or create your own. The inventory _must_ define the following groups: 
  _primary_master_ (a single machine on which _kubeadm_ will be run), _secondary_masters_ (the other masters), _masters_ (all masters), _minions_ (the worker nodes), _nodes_ (all nodes), _etcd_ (all machines on which etcd is installed, usually the masters).
-2. Either edit _group_vars/my_cluster.yaml_ to your needs or create your own (named after the group defined in the inventory you want to use). Override settings from _group_vars/all.yaml_ where necessary. You may decide to change some of the defaults for your environment: `VIP_MANAGER` (`kube-vip` or `keepalived`) `LOAD_BALANCING` (`kube-vip`, `haproxy` or `nginx`), `NETWORK_PLUGIN` (`weavenet`, `flannel` or `calico`) and `ETCD_HOSTING` (`stacked` if running on the masters, else `external`).
+2. Create a file named as the group defined in your inventory file in _group_vars_ overriding the defaults from _all.yaml_ where necessary. Note that if you set `SETUP_DOCKER` to `yes`, the device for _/var/lib/docker_ must exist and be empty, it will be formatted and mounted automatically. You may also decide to change some of the defaults for your environment: `LOAD_BALANCING` (`kube-vip`, `haproxy` or `nginx`), `NETWORK_PLUGIN` (`weavenet`, `flannel` or `calico`) and `ETCD_HOSTING` (`stacked` if running on the masters, else `external`).
 
 ## What the cluster setup does
 1. Set up an _etcd_ cluster with self-signed certificates on all hosts in group _etcd._.
@@ -57,10 +56,6 @@ In order to use the ansible scripts, at least two files need to be configured:
 3. Copy the tar files over to the target hosts.
 4. Import the images from the tar files on the target hosts.
 
-## What the etcd-operator setup does
-
-1. Install etcd-operator, so that applications can use it for creating their own _etcd_ clusters (Kubernetes is running on its own cluster running natively, not controlled by etcd-operator).
-
 ## What the prometheus-operator setup does
 
 1. Install prometheus-operator, so that applications can use it for creating their own _prometheus_ instances, service monitors etc.
@@ -74,7 +69,7 @@ In order to use the ansible scripts, at least two files need to be configured:
 
 ## Setting up the dashboard
 
-The _cluster-dashboard.yaml_ playbook does the following:
+The _playbook-02-dashboard.yaml_ playbook does the following:
 
 1. Install the _dashboard_ and _metrics-server_ components.
 2. Scale the number of instances to the number of master nodes.
@@ -95,7 +90,7 @@ The dashboard will ask you to authenticate. There are several options:
     kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
     ```
 
-3. Use the _local-access.yaml_ playbook to generate a configuration file. That file can be copied to _~/.kube/config_ for local `kubectl` access. It can also be uploaded as _kubeconfig_ file in the dashboard's login dialogue.
+3. Use the _playbook-03-local-access.yaml_ playbook to generate a configuration file. That file can be copied to _~/.kube/config_ for local `kubectl` access. It can also be uploaded as _kubeconfig_ file in the dashboard's login dialogue.
 
 ## Setting up the EFK stack for centralised logging
 
@@ -107,7 +102,7 @@ The dashboard will ask you to authenticate. There are several options:
 
 ## Configuring local access
 
-Running the _local-access.yaml_ playbook creates a file _/tmp/<my-cluster-name>-admin.conf_ that can be used as _~/.kube/config_. If the dashboard has been installed (see above) the file will contain the 'admin-user' service account's token, so that for both `kubectl` and the dashboard root-like access is possible. If that service account does not exist, the client-side certificate will be used instead which is OK for testing environments but is generally considered not recommendable because the client-side certificates are not supposed to leave their master host.
+Running the _playbook-03-local-access.yaml_ playbook creates a file _/tmp/<my-cluster-name>-admin.conf_ that can be used as _~/.kube/config_. If the dashboard has been installed (see above) the file will contain the 'admin-user' service account's token, so that for both `kubectl` and the dashboard root-like access is possible. If that service account does not exist, the client-side certificate will be used instead which is OK for testing environments but is generally considered not recommendable because the client-side certificates are not supposed to leave their master host.
 
 ## Upgrading a cluster
 
@@ -115,8 +110,8 @@ For upgrading a cluster several steps are needed:
 
 1. Find out which software versions to upgrade to.
 2. Set the ansible variables to the new software versions.
-3. Run the _cluster-images.yaml_ playbook if the cluster has no Internet access.
-4. Run the _cluster-upgrade.yaml_ playbook.
+3. Run the _playbook-00-cluster-images.yaml_ playbook if the cluster has no Internet access.
+4. Run the _playbook-31-cluster-upgrade.yaml_ playbook.
 
 **Note: Never upgrade a productive cluster without having tried it on a reference system before.**
 
@@ -133,7 +128,7 @@ If it has you may want to do this anyway to make the upgrade more seamless.
 
 To do so, run the following command:
 
-    ansible-playbook -f <good-number-of-concurrent-processes> -i <your-environment>.inventory cluster-images.yaml
+    ansible-playbook -f <good-number-of-concurrent-processes> -i <your-environment>.inventory playbook-00-cluster-images.yaml
 
 I usually set the number of concurrent processes manually because if a cluster consists of more than 5 (default) nodes picking a higher value here significantly speeds up the process.
 
@@ -143,7 +138,7 @@ You may want to backup _/etc/kubernetes_ on all your master machines. Do this be
 
 The actual upgrade is automated. Run the following command:
 
-    ansible-playbook -f <good-number-of-concurrent-processes> -i <your-environment>.inventory cluster-upgrade.yaml
+    ansible-playbook -f <good-number-of-concurrent-processes> -i <your-environment>.inventory playbook-31-cluster-upgrade.yaml
 
 See the comment above on setting the number of concurrent processes.
 
@@ -163,7 +158,7 @@ If _kubeadm_ failed to upgrade the cluster it will try to perform a rollback. He
 
 If _kubeadm_ on one of the secondary masters failed you still have a working, upgraded cluster, but without the secondary masters which may be in a somewhat undefined condition. In some cases _kubeadm_ fails if the cluster is still busy after having upgraded the previous master node, so that waiting a bit and running `kubeadm upgrade apply v<VERSION>` may even succeed. Otherwise you will have to find out what went wrong and join the secondaries manually. Once this has been done, finish the automatic upgrade process by processing the second half of the playbook only:
 
-    ansible-playbook -f <good-number-of-concurrent-processes> -i <your-environment>.inventory cluster-upgrade.yaml --tags nodes
+    ansible-playbook -f <good-number-of-concurrent-processes> -i <your-environment>.inventory playbook-31-cluster-upgrade.yaml --tags nodes
 
 If upgrading the software packages (i.e. the second half of the playbook) failed, you still have a working cluster. You may try to fix the problems and continue manually. See the _.yaml_ files under _roles/upgrade-nodes/tasks_ for what you need to do.
 
@@ -175,33 +170,31 @@ If you are trying out the upgrade on a reference system, you may have to downgra
 
 To run one of the playbooks (e.g. to set up a cluster), run ansible like this:
 
-    ansible-playbook -i <your-inventory-file>.inventory cluster-setup.yaml
+    ansible-playbook -i <your-inventory-file>.inventory playbook-01-cluster-setup.yaml
 
 You might want to adapt the number of parallel processes to your number of hosts using the `-f' option.
 
 A sane sequence of playbooks for a complete setup would be:
 
-- cluster-setup.yaml
-- etcd-operator.yaml
-- cluster-dashboard.yaml
-- cluster-load-balanced.yaml
+- playbook-00-cluster-images.yaml
+- playbook-01-cluster-setup.yaml
+- playbook-02-cluster-dashboard.yaml
 
 The following playbooks can be used as needed:
 
-- cluster-uninstall.yaml
-- local-access.yaml
-- uninstall-dashboard.yaml
+- playbook-51-cluster-uninstall.yaml
+- playbook-03-local-access.yaml
+- playbook-52-uninstall-dashboard.yaml
 
 Sequence for reinstalling a cluster:
 
     INVENTORY=<your-inventory-file> 
     NODES=<number-of-nodes>
-    ansible-playbook -f $NODES -i $INVENTORY cluster-uninstall.yaml 
-    sleep 3m
+    ansible-playbook -f $NODES -i $INVENTORY playbook-51-cluster-uninstall.yaml 
     # if you want to downgrade your kubelet, kubectl, ... packages you need to uninstall them first
     # if this is not the issue here, you can skip the following line
     ansible -u root -f $NODES -i $INVENTORY nodes -m command -a "rpm -e kubelet kubectl kubeadm kubernetes-cni"
-    for i in cluster-setup.yaml etcd-operator.yaml cluster-dashboard.yaml ; do 
+    for i in playbook-01-cluster-setup.yaml playbook-02-cluster-dashboard.yaml; do 
         ansible-playbook -f $NODES -i $INVENTORY $i || break
         sleep 15s
     done
@@ -210,10 +203,6 @@ Sequence for reinstalling a cluster:
 
 This is a preview in order to obtain early feedback. It is not done yet. Known limitations are:
 
-- In some clusters joining secondary masters fails with EOF when uploading configmaps when _nginx_ is used as a load balancer. For now, please use _haproxy_ or _kube-vip_ instead.
+- The setup with 'kube-vip' as load balancer / VIP manager does not work completely on some systems. In particular using LB ports other than 6443 often fails.
 - The code has been tested almost exclusively in a Redhat-like (RHEL) environment. More testing on other distros is needed.
 
-## Why is there no release yet?
-
-Currently the code is in a "works for me" state. In order to make a release more feedback from others is needed.
-I still expect some more bugs to be reported and fixed thereafter. Once this phase has ended there will be a first release.

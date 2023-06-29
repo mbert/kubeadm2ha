@@ -1,0 +1,21 @@
+#
+# Sets up the admin user and account
+#
+---
+
+- name: Create directory
+  ansible.builtin.file: path=/root/setup/admin-user owner=root group=root mode=0755 state=directory
+
+- name: Copy service-account.yaml
+  ansible.builtin.copy: src=service-account.yaml dest=/root/setup/admin-user/service-account.yaml owner=root group=root mode=0644
+
+- name: Copy admin-user.yaml
+  ansible.builtin.copy: src=admin-user.yaml dest=/root/setup/admin-user/admin-user.yaml owner=root group=root mode=0644
+
+- name: Install service account
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/setup/admin-user/service-account.yaml" # noqa no-changed-when
+
+- name: Install admin user
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/setup/admin-user/admin-user.yaml" # noqa no-changed-when
+
+-

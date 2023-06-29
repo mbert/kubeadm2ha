@@ -1,0 +1,24 @@
+#
+# Playbook to upgrade a Kubernetes cluster.
+#
+--- 
+
+- name: Upgrade the master nodes
+  hosts: masters
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - upgrade_masters
+  tags:
+  - upgrade_masters
+
+- name: Upgrade the minions
+  hosts: nodes
+  remote_user: root
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+  - upgrade_minions
+  tags:
+  - upgrade_minions

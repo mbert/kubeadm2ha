@@ -1,0 +1,12 @@
+#!/bin/sh
+
+errorExit() {
+	echo "*** $*" 1>&2
+	exit 1
+}
+
+wget -q -O /tmp/calico.yaml '{{ CALICO_YAML_URL }}' || errorExit "Error downloading from '{{ CALICO_YAML_URL }}'."
+
+grep -E '^[ \t]*image:' /tmp/calico.yaml  | sed 's/.*image: *//' | tr -d "'" | tr -d '"' | sort -u
+
+rm -f /tmp/calico.yaml

@@ -1,0 +1,22 @@
+#!/bin/sh
+
+IMAGE="plndr/kube-vip:{{ KUBE_VIP_TAG }}"
+
+
+{% if KUBE_VIP == 'arp' %}
+ARGS="--enableLoadBalancer --leaderElection"
+{% else %}
+ARGS="--localAS 65000 --bgpRouterID {{ ansible_default_ipv4.address }} --bgppeers "
+{% for host in groups['masters'] %}
+{% if hostvars[host]['ansible_hostname'] != ansible_hostname %}
+ARGS="${ARGS}{{ hostvars[host]['ansible_default_ipv4']['address'] }}:6500::false,"
+{% endif %}
+{% endfor %}
+ARGS="`echo "${ARGS}" | sed 's/,$//'`"
+{% endif %}
+
+CMD="docker run -it --rm ${IMAGE} manifest pod --address {{ APISERVER_VIP }} --controlplane --services --{{ KUBE_VIP }} --lbPort {{ APISERVER_LB_PORT }} ${ARGS}"
+#echo "$CMD"
+$CMD
+
+

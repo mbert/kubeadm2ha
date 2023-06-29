@@ -4,7 +4,10 @@
 #
 --- 
 CLUSTER_NAME: md-kubernetes
-#NETWORK_PLUGIN: flannel
-NETWORK_PLUGIN: weavenet
-LOAD_BALANCING: "haproxy"
-VIP_MANAGER: "keepalived"
+POD_NETWORK_CIDR: 10.244.0.0/16
+NETWORK_PLUGIN: flannel
+#NETWORK_PLUGIN: calico
+#NETWORK_PLUGIN: weavenet
+#ETCD_HOSTING: "external"
+APISERVER_LB_PORT: 6443
+LOAD_BALANCING: "kube-vip"

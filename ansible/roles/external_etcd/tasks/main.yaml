@@ -1,0 +1,88 @@
+#
+# Sets up etcd on the masters.
+#
+---
+- name: Create directory for systemd configuration
+  ansible.builtin.file: "path=/etc/systemd/system/kubelet.service.d state=directory mode=0755 owner=root group=root"
+
+- name: Install kubelet configuration for systemd
+  ansible.builtin.template: "src=kubelet-config.yaml.j2 dest=/etc/systemd/system/kubelet.service.d/kubelet-config.yaml mode=0644 owner=root group=root"
+
+- name: Make kubelet a service manager for etcd
+  ansible.builtin.template: "src=20-etcd-service-manager.conf.j2 dest=/etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf mode=0644 owner=root group=root"
+
+- name: Activate and restart kubelet
+  ansible.builtin.systemd: "name=kubelet enabled=true daemon_reload=true state=restarted"
+
+- name: Clean up /etc/kubernetes/manifests/etcd.yaml from previous installations
+  ansible.builtin.file: "path=/etc/kubernetes/manifests/etcd.yaml state=absent"
+
+- name: Clean up /var/lib/etcd/member from previous installations
+  ansible.builtin.file: "path=/var/lib/etcd/member state=absent"
+
+- name: Clean up /etc/kubernetes/pki from previous installations
+  ansible.builtin.file: "path=/etc/kubernetes/pki state=absent"
+
+- name: Clean up /tmp/etcd from previous installations on primary etcd node
+  ansible.builtin.file: "path=/tmp/etcd state=absent"
+  when: "'primary_etcd' in group_names"
+
+- name: Create temporary cert directories on primary etcd node
+  ansible.builtin.file: "path=/tmp/etcd/{{ hostvars[item]['ansible_default_ipv4']['address'] }}/certs state=directory mode=0755"
+  with_items: "{{ groups['etcd'] }}"
+  when: "'primary_etcd' in group_names"
+
+- name: Generate kubeadmcfg.yaml on primary etcd node
+  ansible.builtin.template: "src=kubeadmcfg.yaml.j2 dest=/tmp/etcd/{{ hostvars[etcdnode]['ansible_default_ipv4']['address'] }}/kubeadmcfg.yaml mode=0644"
+  with_items: "{{ groups['etcd'] }}"
+  loop_control:
+    loop_var: etcdnode
+  when: "'primary_etcd' in group_names"
+
+- name: Create etcd CA
+  ansible.builtin.command: "kubeadm init phase certs etcd-ca"
+  when: "'primary_etcd' in group_names"
+
+- name: Create script for creating all certs for all etcd nodes primary etcd node
+  ansible.builtin.template: "src=create-certs.sh.j2 dest=/root/create-certs.sh mode=0755"
+  when: "'primary_etcd' in group_names"
+
+- name: Run script for creating all certs for all etcd nodes primary etcd node
+  ansible.builtin.command: "/root/create-certs.sh"
+  when: "'primary_etcd' in group_names"
+
+- name: Archive certificate files on primary etcd node
+  ansible.builtin.archive: "path=/tmp/etcd dest=/tmp/certs.tar.gz mode=0644"
+  when: "'primary_etcd' in group_names"
+
+- name: Fetch certificate files from primary etcd node
+  ansible.builtin.fetch: "src=/tmp/certs.tar.gz dest=/tmp/ flat=yes"
+  when: "'primary_etcd' in group_names"
+
+- name: Unarchive certificates on localhost...
+  delegate_to: localhost
+  ansible.builtin.unarchive: "copy=no src=/tmp/certs.tar.gz dest=/tmp"
+  when: "'primary_etcd' in group_names"
+
+- name: Copy certs to all etcd nodes
+  ansible.builtin.copy: "src=/tmp/etcd/{{ ansible_default_ipv4.address }}/pki dest=/etc/kubernetes/ mode=0644 directory_mode=0755 owner=root group=root"
+
+- name: Copy kubeadmcfg.yaml to all etcd nodes
+  ansible.builtin.copy: "src=/tmp/etcd/{{ ansible_default_ipv4.address }}/kubeadmcfg.yaml dest=/root/ mode=0644"
+
+- name: Create etcd manifests on all etcd nodes
+  ansible.builtin.command: "kubeadm init phase etcd local --config=/root/kubeadmcfg.yaml" # noqa no-changed-when
+
+- name: Archive certs for master nodes on primary etcd node
+  ansible.builtin.archive: "path=/etc/kubernetes/pki/etcd/ca.crt,/etc/kubernetes/pki/apiserver-etcd-client.crt,/etc/kubernetes/pki/apiserver-etcd-client.key dest=/tmp/etcd-certs.tar.gz mode=0644"
+  when: "'primary_etcd' in group_names"
+
+- name: Fetch master certs from primary etcd node
+  ansible.builtin.fetch: "src=/tmp/etcd-certs.tar.gz dest=/tmp/ flat=yes"
+  when: "'primary_etcd' in group_names"
+
+- name: Check etcd cluster health on primary etcd node
+  ansible.builtin.shell: "for i in 1 2 3 4 5; do docker run --rm --net host -v /etc/kubernetes:/etc/kubernetes registry.k8s.io/etcd:{{ ETCD_TAG }} etcdctl --cert /etc/kubernetes/pki/etcd/peer.crt --key /etc/kubernetes/pki/etcd/peer.key --cacert /etc/kubernetes/pki/etcd/ca.crt --endpoints https://{{ ansible_default_ipv4.address }}:2379 endpoint health --cluster && exit 0; sleep 3s; done; /bin/false"
+  when: "'primary_etcd' in group_names"
+
+

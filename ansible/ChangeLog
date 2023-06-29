@@ -1,0 +1,5 @@
+July 2023:
+- update to basic ansible code in order to support the most recent versions of k8s and the other software installable by it
+- rename playbooks for more consistency
+- remove etcd-operator support as the project is no longer being maintained
+- initial ansible code checking with ansible-lint
