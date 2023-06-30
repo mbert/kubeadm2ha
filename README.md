@@ -203,6 +203,6 @@ Sequence for reinstalling a cluster:
 
 This is a preview in order to obtain early feedback. It is not done yet. Known limitations are:
 
+- Not yet finished: support for EFK stack (will need to see whether this will work at all)
 - The setup with 'kube-vip' as load balancer / VIP manager does not work completely on some systems. In particular using LB ports other than 6443 often fails.
 - The code has been tested almost exclusively in a Redhat-like (RHEL) environment. More testing on other distros is needed.
-
