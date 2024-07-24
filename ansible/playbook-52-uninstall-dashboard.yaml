@@ -6,12 +6,11 @@
 - name: Uninstall Dashboard
   hosts: nodes
   remote_user: root
-  gather_facts: no
-  any_errors_fatal: yes
+  gather_facts: false
+  any_errors_fatal: true
   tasks:
-  - name: Uninstalling...
-    ansible.builtin.import_tasks: roles/dashboard/tasks/uninstall.yaml
-    when: "'primary_master' in group_names"
+    - name: Uninstalling...
+      ansible.builtin.import_tasks: roles/dashboard/tasks/uninstall.yaml
+      when: "'primary_master' in group_names"
   tags:
-  - uninstall-dashboard
-
+    - uninstall-dashboard

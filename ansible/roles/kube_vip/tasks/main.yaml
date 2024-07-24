@@ -1,21 +1,31 @@
 #
 # Set up kube-vip cluster and load balancer
 #
---- 
+---
 
 - name: Create manifests directory for static pods /etc/kubernetes/manifests
-  ansible.builtin.file: "path=/etc/kubernetes/manifests state=directory mode=0755"
+  ansible.builtin.file:
+    path: /etc/kubernetes/manifests
+    state: directory
+    mode: "0755"
 
 - name: Create script for creating the local manifest file
-  ansible.builtin.template: "src=create-kube-vip-manifest.sh.j2 dest=/root/create-kube-vip-manifest.sh mode=0755"
+  ansible.builtin.template:
+    src: create-kube-vip-manifest.sh.j2
+    dest: /root/create-kube-vip-manifest.sh
+    mode: "0755"
 
 - name: Create manifest for static pod
-  ansible.builtin.shell: "set -o pipefail; /root/create-kube-vip-manifest.sh | tee /etc/kubernetes/manifests/kube-vip.yaml" # noqa no-changed-when
+  ansible.builtin.shell: "set -o pipefail; /root/create-kube-vip-manifest.sh | tee /etc/kubernetes/manifests/kube-vip.yaml" # noqa no-changed-when yaml[line-length]
 
 - name: Load IPVS kernel module (only for ARP)
   ansible.builtin.command: "modprobe ip_vs" # noqa no-changed-when
   when: "KUBE_VIP == 'arp'"
 
 - name: Configure system for loading IPVS kernel module at boot (only for ARP)
-  ansible.builtin.copy: "src=ipvs.conf dest=/etc/modules-load.d/ipvs.conf owner=root mode=0644"
+  ansible.builtin.copy:
+    src: ipvs.conf
+    dest: /etc/modules-load.d/ipvs.conf
+    owner: root
+    mode: "0644"
   when: "KUBE_VIP == 'arp'"

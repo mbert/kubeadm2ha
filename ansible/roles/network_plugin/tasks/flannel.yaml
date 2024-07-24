@@ -5,4 +5,7 @@
 
 - name: Generate 'flannel' network plugin yaml
   delegate_to: localhost
-  ansible.builtin.get_url: "dest=/tmp/net.yaml url={{ FLANNEL_YAML_URL }}"
+  ansible.builtin.get_url:
+    dest: /tmp/net.yaml
+    url: "{{ FLANNEL_YAML_URL }}"
+    mode: "0644"

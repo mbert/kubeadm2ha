@@ -1,0 +1,46 @@
+#
+# Fetch all images necessary to run Kubernetes and install them on the target machines.
+#
+---
+
+- name: Copy docker images for Kubernetes
+  hosts: primary_master
+  remote_user: root
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: Copy script for detecting image tags
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/roles/install_images/files/detect-image-tags.sh"
+        dest: /tmp/detect-image-tags.sh
+        mode: "0755"
+        owner: root
+        group: root
+    - name: Fill temporary vars file with detected image tags
+      ansible.builtin.shell: "/tmp/detect-image-tags.sh {{ KUBERNETES_VERSION }} {{ HOST_ARCH }} >/tmp/tags.var" # noqa no-changed-when
+    - name: Create temporary vars file
+      ansible.builtin.tempfile:
+        state: file
+        suffix: .var
+      register: TMP_VAR
+      delegate_to: localhost
+    - name: Fetch file with detected image tags
+      ansible.builtin.fetch:
+        src: /tmp/tags.var
+        dest: "{{ TMP_VAR.path }}"
+        mode: "0644"
+        flat: true
+    - name: Read image tags
+      ansible.builtin.include_vars:
+        file: "{{ TMP_VAR.path }}"
+    - name: Generate script for registering names and versions of images to pull
+      ansible.builtin.template:
+        mode: "0755"
+        src: "{{ playbook_dir }}/roles/install_images/templates/imageversions.yaml.j2"
+        dest: "{{ playbook_dir }}/vars/imageversions.yaml"
+      delegate_to: localhost
+    - name: Remove temporary vars file
+      ansible.builtin.file:
+        path: "{{ TMP_VAR.path }}"
+        state: absent
+      delegate_to: localhost

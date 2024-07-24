@@ -3,14 +3,26 @@
 #
 ---
 - name: Create configuration directory
-  ansible.builtin.file: "path=/etc/nginx state=directory owner=root mode=0755"
+  ansible.builtin.file:
+    path: /etc/nginx
+    state: directory
+    owner: root
+    mode: "0755"
 
 - name: Generate service configuraton file
-  ansible.builtin.template: "src=nginx.conf.j2 dest=/etc/nginx/nginx.conf mode=0644"
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    mode: "0644"
 
 - name: Generate static pod configuraton file directory
-  ansible.builtin.file: "path=/etc/kubernetes/manifests state=directory mode=755"
+  ansible.builtin.file:
+    path: /etc/kubernetes/manifests
+    state: directory
+    mode: "0755"
 
 - name: Generate static pod configuraton file
-  ansible.builtin.template: "src=nginx.yaml.j2 dest=/etc/kubernetes/manifests/nginx.yaml mode=0644"
-
+  ansible.builtin.template:
+    src: nginx.yaml.j2
+    dest: /etc/kubernetes/manifests/nginx.yaml
+    mode: "0644"

@@ -1,0 +1,11 @@
+#
+# Clean up workaround for https://github.com/kube-vip/kube-vip/issues/684
+#
+---
+
+- name: Setup kube-vip.yaml after bootstrap (see https://github.com/kube-vip/kube-vip/issues/684)
+  ansible.builtin.lineinfile:
+    path: /etc/kubernetes/manifests/kube-vip.yaml
+    regexp: '^( *path: *)/etc/kubernetes/admin.conf'
+    line: '\1/etc/kubernetes/super-admin.conf'
+    backrefs: true

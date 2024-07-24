@@ -1,5 +1,5 @@
 #
-# Perform the upgrade sequence on one minion: 
+# Perform the upgrade sequence on one minion:
 # - drain the node the brutal way (i.e. no local data is preserved, daemonsets ignored)
 # - shut down kubernetes services
 # - upgrade software
@@ -13,19 +13,19 @@
   when: "'primary_master' in group_names"
 
 - name: Perform upgrade on minion
-  ansible.builtin.command: "kubeadm upgrade node"
+  ansible.builtin.command: "kubeadm upgrade node" # noqa no-changed-when
   when: "minion == inventory_hostname"
 
 - name: Upgrade software
-  ansible.builtin.package: name={{ item }} state=present
-  with_items:
-  - kubelet-{{ KUBERNETES_VERSION }}
-  - kubectl-{{ KUBERNETES_VERSION }}
-  - kubernetes-cni-{{ KUBERNETES_CNI_VERSION }}
+  ansible.builtin.include_tasks:
+    file: "{{ playbook_dir }}/tasks/install-or-upgrade-k8n-packages.yaml"
   when: "minion == inventory_hostname"
 
 - name: Restart kubelet
-  ansible.builtin.systemd: name=kubelet daemon_reload=true state=restarted 
+  ansible.builtin.systemd:
+    name: kubelet
+    daemon_reload: true
+    state: restarted
   when: "minion == inventory_hostname"
 
 - name: Uncordon minion node

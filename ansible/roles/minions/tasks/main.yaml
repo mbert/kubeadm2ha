@@ -4,13 +4,21 @@
 ---
 
 - name: Copy join script (fetched in 'join-token' role)
-  ansible.builtin.copy: "src=/tmp/join-worker-node.sh dest=/tmp/join-worker-node.sh owner=root group=root mode=0755"
+  ansible.builtin.copy:
+    src: /tmp/join-worker-node.sh
+    dest: /tmp/join-worker-node.sh
+    owner: root
+    group: root
+    mode: "0755"
 
 - name: Join worker-node
   ansible.builtin.shell: "set -o pipefail; /tmp/join-worker-node.sh 2>&1 | tee /tmp/join-worker-node.out" # noqa no-changed-when
 
 - name: Create script for waiting for minions
-  ansible.builtin.template: src="wait-for-minions.sh.j2" dest="/tmp/wait-for-minions.sh" mode=0755
+  ansible.builtin.template:
+    src: "wait-for-minions.sh.j2"
+    dest: "/tmp/wait-for-minions.sh"
+    mode: "0755"
   when: "'primary_master' in group_names"
 
 - name: Wait for minions

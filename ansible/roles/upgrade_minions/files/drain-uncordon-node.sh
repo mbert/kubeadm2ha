@@ -7,7 +7,7 @@ errorExit() {
 
 ACTION="$1"
 case "$ACTION" in
-	drain) ACTION="$ACTION --ignore-daemonsets";;
+	drain) ACTION="$ACTION --ignore-daemonsets --delete-emptydir-data";;
 	uncordon) ;;
 	*) errorExit "Usage: $0 <drain|uncordon> <hostname>";;
 esac

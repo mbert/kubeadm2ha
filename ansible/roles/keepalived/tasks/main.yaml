@@ -3,20 +3,43 @@
 #
 ---
 - name: Create configuration directory
-  ansible.builtin.file: "path=/etc/keepalived state=directory owner=root mode=0755"
+  ansible.builtin.file:
+    path: /etc/keepalived
+    state: directory
+    owner: root
+    mode: "0755"
 
 - name: Copy check script
-  ansible.builtin.template: "src=check_apiserver.sh.j2 dest=/etc/keepalived/check_apiserver.sh owner=root group=root mode=0755"
+  ansible.builtin.template:
+    src: check_apiserver.sh.j2
+    dest: /etc/keepalived/check_apiserver.sh
+    owner: root
+    group: root
+    mode: "0755"
 
 - name: Generate configuraton file
-  ansible.builtin.template: "src=keepalived.conf.j2 dest=/etc/keepalived/keepalived.conf mode=0644"
+  ansible.builtin.template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    mode: "0644"
 
 - name: Copying override script to primary master in order to have a VIP before at least one APIServer is up
-  ansible.builtin.copy: "src=check_override.sh dest=/etc/keepalived/check_override.sh mode=0755 owner=root group=root"
+  ansible.builtin.copy:
+    src: check_override.sh
+    dest: /etc/keepalived/check_override.sh
+    mode: "0755"
+    owner: root
+    group: root
   when: "'primary_master' in group_names"
 
 - name: Generate static pod configuraton file directory
-  ansible.builtin.file: "path=/etc/kubernetes/manifests state=directory mode=0755"
+  ansible.builtin.file:
+    path: /etc/kubernetes/manifests
+    state: directory
+    mode: "0755"
 
 - name: Generate static pod configuraton file
-  ansible.builtin.template: "src=keepalived.yaml.j2 dest=/etc/kubernetes/manifests/keepalived.yaml mode=0644"
+  ansible.builtin.template:
+    src: keepalived.yaml.j2
+    dest: /etc/kubernetes/manifests/keepalived.yaml
+    mode: "0644"

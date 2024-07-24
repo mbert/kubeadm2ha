@@ -1,13 +1,20 @@
-
 #
 # Variables for the 'md-kubernetes' environment
 #
---- 
+---
 CLUSTER_NAME: md-kubernetes
 POD_NETWORK_CIDR: 10.244.0.0/16
 NETWORK_PLUGIN: flannel
-#NETWORK_PLUGIN: calico
-#NETWORK_PLUGIN: weavenet
-#ETCD_HOSTING: "external"
-APISERVER_LB_PORT: 6443
+# NETWORK_PLUGIN: calico
+# NETWORK_PLUGIN: weavenet
+
+# ETCD_HOSTING: "external"
+
+# Settings for kube-vip
+# APISERVER_LB_PORT: 6443
 LOAD_BALANCING: "kube-vip"
+
+# Settings for keepalived
+# APISERVER_LB_PORT: 8443
+# LOAD_BALANCING: "haproxy"
+# LOAD_BALANCING: "nginx"

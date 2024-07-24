@@ -1,0 +1,28 @@
+#
+# Playbook to set up a Kubernetes cluster.
+#
+---
+
+- name: Uninstall Cluster
+  hosts: nodes
+  remote_user: root
+  gather_facts: false
+  any_errors_fatal: true
+  roles:
+    - uninstall
+  tags:
+    - uninstall-cluster
+
+- name: Reboot Cluster
+  hosts: nodes
+  remote_user: root
+  gather_facts: false
+  any_errors_fatal: false
+  tasks:
+    - name: Reboot machine
+      ansible.builtin.command: /sbin/shutdown -r +1 # noqa no-changed-when ignore-errors
+      async: 0
+      poll: 0
+      ignore_errors: true
+  tags:
+    - reboot-cluster

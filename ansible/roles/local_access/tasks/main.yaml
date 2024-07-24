@@ -7,7 +7,11 @@
   ansible.builtin.script: "create-kubeconfig.sh"
 
 - name: Fetch patched admin.conf
-  ansible.builtin.fetch: src=/tmp/admin.conf dest=/tmp/{{ CLUSTER_NAME }}-admin.conf flat=yes
+  ansible.builtin.fetch:
+    src: /tmp/admin.conf
+    dest: "/tmp/{{ CLUSTER_NAME }}-admin.conf"
+    flat: true
 
 - name: Done
-  ansible.builtin.debug: msg="The kubeconfig file was saved to '/tmp/{{ CLUSTER_NAME }}-admin.conf'. You can run 'cp /tmp/{{ CLUSTER_NAME }}-admin.conf ~/.kube/config' to use it or for access to the dashboard."
+  ansible.builtin.debug:
+    msg: "The kubeconfig file was saved to '/tmp/{{ CLUSTER_NAME }}-admin.conf'. You can run 'cp /tmp/{{ CLUSTER_NAME }}-admin.conf ~/.kube/config' to use it or for access to the dashboard." # noqa yaml[line-length]

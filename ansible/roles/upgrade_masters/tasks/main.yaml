@@ -9,7 +9,8 @@
 ---
 
 - name: Make sure some needed software is installed via package manager
-  ansible.builtin.package: name=kubeadm-{{ KUBERNETES_VERSION }} state=present
+  ansible.builtin.include_tasks:
+    file: "{{ playbook_dir }}/tasks/install-or-upgrade-kubeadm.yaml"
 
 - name: Upgrade masters one by one
   ansible.builtin.include_tasks: upgrade-master.yaml
@@ -18,15 +19,15 @@
     loop_var: master
 
 - name: Upgrade software
-  ansible.builtin.package: name={{ item }} state=present
-  with_items:
-  - kubelet-{{ KUBERNETES_VERSION }}
-  - kubectl-{{ KUBERNETES_VERSION }}
-  - kubernetes-cni-{{ KUBERNETES_CNI_VERSION }}
+  ansible.builtin.include_tasks:
+    file: "{{ playbook_dir }}/tasks/install-or-upgrade-k8n-packages.yaml"
 
 - name: Restart kubelet
-  ansible.builtin.systemd: name=kubelet daemon_reload=true state=restarted 
+  ansible.builtin.systemd:
+    name: kubelet
+    daemon_reload: true
+    state: restarted
 
 - name: Set coredns replicas (just in case)
-  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/coredns"
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl scale --replicas={{ groups['masters'] | length }} -n kube-system deployment/coredns" # noqa yaml[line-length] no-changed-when
   when: "'primary_master' in group_names"

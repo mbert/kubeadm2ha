@@ -1,42 +1,34 @@
 #
 # Global variables for all nodes
 #
---- 
+---
 
 # Base settings
-#CLUSTER_NAME: (abstract)
-#LOAD_BALANCING: (may be undefined)
+# CLUSTER_NAME: (abstract)
+# LOAD_BALANCING: (may be undefined)
 
-APISERVER_VIP: "{{groups['apiserver_vip'][0]}}"
-APISERVER_LB_PORT: 8443 # needs to be '6443' for 'kube-vip', else something different
+APISERVER_VIP: "{{ groups['apiserver_vip'][0] }}"
+APISERVER_LB_PORT: 6443 # needs to be '6443' for 'kube-vip', else something different
 LOAD_BALANCING: "haproxy" # may also be "nginx" or "kube-vip" (VIP will be managed by keepalived if LOAD_BALANCING != 'kube-vip')
 KUBE_VIP: "arp" # may also be "bgp" if you have real routers; in a VM-only environment you will want "arp"
+KEEPALIVED_ROUTER_ID: 51 # must be different from other keepalived cluster router IDs in the same network
+KEEPALIVED_AUTH_PASS: 4be37dc3b4c90194d1600c483e10ad1d # for cluster members amongst each other
 OS_DOCKER_CGROUP_DRIVER: systemd
 HOST_ARCH: amd64
 MASTER_READY_WAIT_SEC: 30
 APISERVER_READY_WAIT_SEC: 30
 ETCD_HOSTING: "stacked" # may also be "external"
 
-# Sources for installing some of the additional packages (note that if pre-downloading images you'll also have to update the corresponding image tags if changing any of these)
+# Sources for installing some of the additional packages
+# (note that if pre-downloading images you'll also have
+# to update the corresponding image tags if changing any of these)
 DASHBOARD_INSTALL_URL: "https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml"
 METRICS_SERVER_INSTALL_URL: "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/high-availability-1.21+.yaml"
-PROMETHEUS_OPERATOR_INSTALL_URL: "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/master/bundle.yaml"
-
-# Settings for EFK stack setup
-ES_DATA_HOST_PATH: /var/lib/es
-ES_WARM_NODES_CPU_LIMIT: 16000m
-ES_WARM_NODES_MEM_LIMIT: 10Gi
-ES_WARM_NODES_CPU_REQUEST: 14000m
-ES_WARM_NODES_MEM_REQUEST: 8Gi
-ES_HOT_NODES_CPU_LIMIT: 16000m
-ES_HOT_NODES_MEM_LIMIT: 10Gi
-ES_HOT_NODES_CPU_REQUEST: 14000m
-ES_HOT_NODES_MEM_REQUEST: 8Gi
 
 # Network settings
 # Choices are: flannel, weavenet, calico
 NETWORK_PLUGIN: flannel
-#POD_NETWORK_CIDR: 10.244.0.0/16 # set this to an environment-specific value if using 'flannel'
+# POD_NETWORK_CIDR: 10.244.0.0/16 # set this to an environment-specific value if using 'flannel'
 
 # Settings for the network plugins
 CALICO_YAML_URL: "https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/calico.yaml"
@@ -51,67 +43,9 @@ CERT_ORGANISATION: "Yoyodyne"
 CERT_STATE: "Hamburg"
 CERT_ORG_UNIT: "Deployment"
 
-# Versions.
-# When upgrading to a new k8s version, you can use `kubeadm config images list' to print a list of images:tags
-
 # Software versions (used by installation via package manager)
-KUBERNETES_VERSION: "1.27.3"
-KUBERNETES_CNI_VERSION: "1.2.0"
-
-# Tags for some images
-KUBE_VIP_TAG: "v0.6.0"
-COREDNS_TAG: "1.10.1"
-PAUSE_TAG: "3.9"
-KEEPALIVED_TAG: "2.0.20"
-NGINX_TAG: "1.16.1"
-HAPROXY_TAG: "2.1.4"
-ETCD_TAG: "3.5.7-0"
-CONFIGMAP_RELOAD_TAG: "v0.0.1"
-PROMETHEUS_OPERATOR_TAG: "v0.37.0"
-PROMETHEUS_TAG: "v2.16.0"
-BUSYBOX_TAG: "1.27.2"
-ELASTICSEARCH_TAG: "v5.6.4"
-ELASTICSEARCH_KUBERNETES_TAG: "6.2.3"
-CURATOR_TAG: "5.4.0"
-FLUENTD_ES_TAG: "v2.0.4"
-KIBANA_OSS_TAG: "6.2.2"
-DASHBOARD_TAG: "v2.7.0"
-METRICS_SERVER_TAG: "v0.6.3"
-METRICS_SCRAPER_TAG: "v1.0.8"
-
-# Images for prefetching
-DOCKER_IMAGES: [
-  { name: "bobrik/curator", tag: "{{ CURATOR_TAG }}" },
-  { name: "busybox", tag: "{{ BUSYBOX_TAG }}" },
-  { name: "dockerregistry.mylan.local:5000/fluentd-elasticsearch", tag: "{{ FLUENTD_ES_TAG }}" },
-  { name: "docker.elastic.co/kibana/kibana-oss", tag: "{{ KIBANA_OSS_TAG }}" },
-  { name: "registry.k8s.io/elasticsearch", tag: "{{ ELASTICSEARCH_TAG }}" }, #???
-  { name: "registry.k8s.io/fluentd-elasticsearch", tag: "{{ FLUENTD_ES_TAG }}" },
-  { name: "registry.k8s.io/coredns", tag: "{{ COREDNS_TAG }}" },
-  { name: "registry.k8s.io/etcd", tag: "{{ ETCD_TAG }}" },
-  { name: "registry.k8s.io/metrics-server-{{ HOST_ARCH }}", tag: "{{ METRICS_SERVER_TAG }}" },
-  { name: "registry.k8s.io/kube-apiserver-{{ HOST_ARCH }}", tag: "v{{ KUBERNETES_VERSION }}" },
-  { name: "registry.k8s.io/kube-controller-manager-{{ HOST_ARCH }}", tag: "v{{ KUBERNETES_VERSION }}" },
-  { name: "registry.k8s.io/kube-proxy-{{ HOST_ARCH }}", tag: "v{{ KUBERNETES_VERSION }}" },
-  { name: "registry.k8s.io/kube-scheduler-{{ HOST_ARCH }}", tag: "v{{ KUBERNETES_VERSION }}" },
-  { name: "registry.k8s.io/pause-{{ HOST_ARCH }}", tag: "{{ PAUSE_TAG }}" },
-  { name: "osixia/keepalived", tag: "{{ KEEPALIVED_TAG }}" },
-  { name: "nginx", tag: "{{ NGINX_TAG }}" },
-  { name: "haproxy", tag: "{{ HAPROXY_TAG }}" },
-  { name: "kubernetesui/metrics-scraper-{{ HOST_ARCH }}", tag: "{{ METRICS_SCRAPER_TAG }}" },
-  { name: "kubernetesui/dashboard-{{ HOST_ARCH }}", tag: "{{ DASHBOARD_TAG }}" },
-  { name: "plndr/kube-vip", tag: "{{ KUBE_VIP_TAG }}" },
-  { name: "quay.io/coreos/configmap-reload", tag: "{{ CONFIGMAP_RELOAD_TAG }}" },
-  { name: "quay.io/coreos/etcd", tag: "v{{ ETCD_TAG }}" },
-  { name: "quay.io/coreos/prometheus-config-reloader", tag: "{{ PROMETHEUS_OPERATOR_TAG }}" },
-  { name: "quay.io/coreos/prometheus-operator", tag: "{{ PROMETHEUS_OPERATOR_TAG }}" },
-  { name: "quay.io/pires/docker-elasticsearch-kubernetes", tag: "{{ ELASTICSEARCH_KUBERNETES_TAG }}" },
-  { name: "quay.io/prometheus/prometheus", tag: "{{ PROMETHEUS_TAG }}" }
-]
-
-
-
-
-
-
-
+KUBERNETES_MAJOR_VERSION: "1"
+KUBERNETES_MINOR_VERSION: "30"
+KUBERNETES_PATCH_VERSION: "3"
+KUBERNETES_VERSION: "{{ KUBERNETES_MAJOR_VERSION }}.{{ KUBERNETES_MINOR_VERSION }}.{{ KUBERNETES_PATCH_VERSION }}"
+KUBERNETES_CNI_VERSION: "1.4.0"

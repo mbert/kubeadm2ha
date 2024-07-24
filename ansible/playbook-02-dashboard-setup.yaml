@@ -3,24 +3,22 @@
 # - insecure setup without ssl
 # - for on-premises installation without real load balancers
 #
---- 
+---
 
 - name: Set up dashboard
   hosts: primary_master
   remote_user: root
-  gather_facts: no
-  any_errors_fatal: yes
+  gather_facts: false
+  any_errors_fatal: true
   roles:
-  - dashboard
+    - dashboard
   tags:
-  - dashboard
+    - dashboard
 
 - name: Create Admin Account
   hosts: primary_master
   remote_user: root
-  gather_facts: no
-  any_errors_fatal: yes
+  gather_facts: false
+  any_errors_fatal: true
   roles:
-  - admin_account
-
-
+    - admin_account

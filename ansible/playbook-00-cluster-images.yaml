@@ -1,68 +1,86 @@
 #
 # Fetch all images necessary to run Kubernetes and install them on the target machines.
 #
---- 
+---
 
 - name: Pull docker images for Kubernetes
   hosts: nodes
   remote_user: root
-  gather_facts: no
-  any_errors_fatal: yes
+  gather_facts: false
+  any_errors_fatal: true
   pre_tasks:
-  - name: Make sure that kubectl is installed on the primary master if 'weavenet' network plugin was selected
-    ansible.builtin.package: name=kubectl-{{ KUBERNETES_VERSION }} state=present
-    when: "'primary_master' in group_names and NETWORK_PLUGIN == 'weavenet'"
-  - name: Get KUBECTL_VERSION for 'weavenet' network plugin if appliccable
-    ansible.builtin.shell: "set -o pipefail; kubectl version | base64 | tr -d '\n'" # noqa no-changed-when
-    register: KUBECTL_VERSION
-    when: "'primary_master' in group_names and NETWORK_PLUGIN == 'weavenet'"
-  - name: Generate script for registering names and versions of images to pull
-    delegate_to: localhost
-    ansible.builtin.template: mode=0755 src="{{ playbook_dir }}/roles/primary_master/templates/get-{{ NETWORK_PLUGIN }}-image-specs.sh.j2" dest="/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh"
-    when: "'primary_master' in group_names"
-  - name: Register names and versions of images to pull
-    delegate_to: localhost
-    ansible.builtin.command: "/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh" # noqa no-changed-when
-    register: NETWORK_PLUGIN_IMAGE_SPECS_RESULT
+    - name: Make sure that kubectl is installed on the primary master if 'weavenet' network plugin was selected
+      ansible.builtin.package:
+        name: "kubectl-{{ KUBERNETES_VERSION }}"
+        state: present
+      when: "'primary_master' in group_names and NETWORK_PLUGIN == 'weavenet'"
+    - name: Get KUBECTL_VERSION for 'weavenet' network plugin if appliccable
+      ansible.builtin.shell: "set -o pipefail; kubectl version | base64 | tr -d '\n'" # noqa no-changed-when
+      register: KUBECTL_VERSION
+      when: "'primary_master' in group_names and NETWORK_PLUGIN == 'weavenet'"
+    - name: Generate script for registering names and versions of images to pull
+      delegate_to: localhost
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/roles/primary_master/templates/get-{{ NETWORK_PLUGIN }}-image-specs.sh.j2"
+        dest: "/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh"
+        mode: "0755"
+      when: "'primary_master' in group_names"
+    - name: Register names and versions of images to pull
+      delegate_to: localhost
+      ansible.builtin.command: "/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh" # noqa no-changed-when
+      register: NETWORK_PLUGIN_IMAGE_SPECS_RESULT
+    - name: Read image names and versions
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/vars/imageversions.yaml"
   tasks:
-  - name: Make sure that docker is installed on the local host
-    delegate_to: localhost
-    ansible.builtin.command: "which docker" # noqa no-changed-when
-    run_once: true
-  - name: Generate script for pulling and saving images
-    delegate_to: localhost
-    ansible.builtin.template: "src=pull-and-save.sh.j2 dest=/tmp/pull-and-save.sh mode=0755"
-    run_once: true
-  - name: Run script for pulling and saving images
-    delegate_to: localhost
-    ansible.builtin.command: "/tmp/pull-and-save.sh {{ NETWORK_PLUGIN }}" # noqa no-changed-when
-    run_once: true
+    - name: Make sure that docker is installed on the local host
+      delegate_to: localhost
+      ansible.builtin.command: "which docker" # noqa no-changed-when
+      run_once: true
+    - name: Generate script for pulling and saving images
+      delegate_to: localhost
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/roles/install_images/templates/pull-and-save.sh.j2"
+        dest: /tmp/pull-and-save.sh
+        mode: "0755"
+      run_once: true
+    - name: Run script for pulling and saving images
+      delegate_to: localhost
+      ansible.builtin.command: "/tmp/pull-and-save.sh {{ NETWORK_PLUGIN }}" # noqa no-changed-when
+      run_once: true
   tags:
-  - fetch-images
+    - fetch-images
 
 - name: Copy docker images for Kubernetes
   hosts: nodes
   remote_user: root
-  gather_facts: no
-  any_errors_fatal: yes
+  gather_facts: false
+  any_errors_fatal: true
   pre_tasks:
-  - name: Make sure that kubectl is installed on the primary master if 'weavenet' network plugin was selected
-    ansible.builtin.package: name=kubectl-{{ KUBERNETES_VERSION }} state=present
-    when: "'primary_master' in group_names and NETWORK_PLUGIN == 'weavenet'"
-  - name: Get KUBECTL_VERSION for 'weavenet' network plugin if appliccable
-    ansible.builtin.shell: "set -o pipefail; kubectl version | base64 | tr -d '\n'" # noqa no-changed-when
-    register: KUBECTL_VERSION
-    when: "'primary_master' in group_names and NETWORK_PLUGIN == 'weavenet'"
-  - name: Generate script for registering names and versions of images to pull
-    delegate_to: localhost
-    ansible.builtin.template: mode=0755 src="{{ playbook_dir }}/roles/primary_master/templates/get-{{ NETWORK_PLUGIN }}-image-specs.sh.j2" dest="/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh"
-    when: "'primary_master' in group_names"
-  - name: Register names and versions of images to pull
-    delegate_to: localhost
-    ansible.builtin.command: "/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh" # noqa no-changed-when
-    register: NETWORK_PLUGIN_IMAGE_SPECS_RESULT
+    - name: Read image names and versions
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/vars/imageversions.yaml"
+    - name: Make sure that kubectl is installed on the primary master if 'weavenet' network plugin was selected
+      ansible.builtin.package:
+        name: "kubectl-{{ KUBERNETES_VERSION }}"
+        state: present
+      when: "'primary_master' in group_names and NETWORK_PLUGIN == 'weavenet'"
+    - name: Get KUBECTL_VERSION for 'weavenet' network plugin if appliccable
+      ansible.builtin.shell: "set -o pipefail; kubectl version | base64 | tr -d '\n'" # noqa no-changed-when
+      register: KUBECTL_VERSION
+      when: "'primary_master' in group_names and NETWORK_PLUGIN == 'weavenet'"
+    - name: Generate script for registering names and versions of images to pull
+      delegate_to: localhost
+      ansible.builtin.template:
+        mode: "0755"
+        src: "{{ playbook_dir }}/roles/primary_master/templates/get-{{ NETWORK_PLUGIN }}-image-specs.sh.j2"
+        dest: "/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh"
+      when: "'primary_master' in group_names"
+    - name: Register names and versions of images to pull
+      delegate_to: localhost
+      ansible.builtin.command: "/tmp/get-{{ NETWORK_PLUGIN }}-image-specs.sh" # noqa no-changed-when
+      register: NETWORK_PLUGIN_IMAGE_SPECS_RESULT
   roles:
-  - install_images
+    - install_images
   tags:
-  - install_images
-
+    - install-images

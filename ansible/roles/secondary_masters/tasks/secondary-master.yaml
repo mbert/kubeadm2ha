@@ -4,11 +4,11 @@
 ---
 
 - name: Run 'kubeadm' if this master node is also an etcd node (external etcd only, need to ignore two preflight errors here)
-  ansible.builtin.command: kubeadm init --ignore-preflight-errors=FileAvailable--etc-kubernetes-manifests-etcd.yaml --ignore-preflight-errors=Port-10250 --config=/root/kubeadm-init.yaml
+  ansible.builtin.command: kubeadm init --ignore-preflight-errors=FileAvailable--etc-kubernetes-manifests-etcd.yaml --ignore-preflight-errors=Port-10250 --config=/root/kubeadm-init.yaml # noqa no-changed-when yaml[line-length]
   when: "ETCD_HOSTING == 'external' and master == inventory_hostname and master in groups['etcd']"
 
 - name: Run 'kubeadm' if this master node is not an etcd node (external etcd only, all preflight errors active here)
-  ansible.builtin.command: kubeadm init --config=/root/kubeadm-init.yaml
+  ansible.builtin.command: kubeadm init --config=/root/kubeadm-init.yaml # noqa no-changed-when
   when: "ETCD_HOSTING == 'external' and master == inventory_hostname and master not in groups['etcd']"
 
 - name: Join secondary master nodes using previously generated script (stacked etcd only)

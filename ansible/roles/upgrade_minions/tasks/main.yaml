@@ -2,14 +2,15 @@
 # Upgrade a cluster's nodes one by one:
 # - cordon it if master, drain it if minion
 # - shut down kubernetes services
-# - upgrade its software 
+# - upgrade its software
 # - restart kubelet service
 # - uncordon it
 #
 ---
 
 - name: Make sure some needed software is installed via package manager
-  ansible.builtin.package: name=kubeadm-{{ KUBERNETES_VERSION }} state=present
+  ansible.builtin.include_tasks:
+    file: "{{ playbook_dir }}/tasks/install-or-upgrade-kubeadm.yaml"
 
 - name: Perform upgrade sequence on all minions one by one
   ansible.builtin.include_tasks: upgrade-minion.yaml

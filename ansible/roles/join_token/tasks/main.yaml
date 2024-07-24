@@ -3,7 +3,11 @@
 #
 ---
 - name: Generate a join token
-  ansible.builtin.shell: "(/bin/echo -e '#!/bin/sh\n\nrm -f /etc/kubernetes/kubelet.conf\n'; kubeadm token create --print-join-command) >/tmp/join-worker-node.sh" # noqa no-changed-when
+  ansible.builtin.shell: "(/bin/echo -e '#!/bin/sh\n\nrm -f /etc/kubernetes/kubelet.conf\n'; kubeadm token create --print-join-command) >/tmp/join-worker-node.sh" # noqa no-changed-when yaml[line-length]
 
 - name: Fetch script with generated command line for adding worker nodes
-  ansible.builtin.fetch: "src=/tmp/join-worker-node.sh dest=/tmp/ flat=yes mode=0755"
+  ansible.builtin.fetch:
+    src: /tmp/join-worker-node.sh
+    dest: /tmp/
+    flat: true
+    mode: "0755"

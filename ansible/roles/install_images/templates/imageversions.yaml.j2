@@ -1,0 +1,41 @@
+#
+# Image versions for exporting and importing
+#
+---
+
+# Versions.
+# When upgrading to a new k8s version, you can use `kubeadm config images list' to print a list of images:tags
+
+BUSYBOX_TAG: "{{ THE_BUSYBOX_TAG }}"
+COREDNS_TAG: "{{ THE_COREDNS_TAG }}"
+DASHBOARD_TAG: "{{ THE_DASHBOARD_TAG }}"
+ETCD_TAG: "{{ THE_ETCD_TAG }}"
+HAPROXY_TAG: "{{ THE_HAPROXY_TAG }}"
+KEEPALIVED_TAG: "{{ THE_KEEPALIVED_TAG }}"
+KUBERNETES_TAG: "{{ THE_KUBERNETES_TAG }}"
+KUBE_VIP_TAG: "{{ THE_KUBE_VIP_TAG }}"
+METRICS_SCRAPER_TAG: "{{ THE_METRICS_SCRAPER_TAG }}"
+METRICS_SERVER_TAG: "{{ THE_METRICS_SERVER_TAG }}"
+NGINX_TAG: "{{ THE_NGINX_TAG }}"
+PAUSE_TAG: "{{ THE_PAUSE_TAG }}"
+
+{% raw %}
+# Images for prefetching
+DOCKER_IMAGES: [
+  { name: "busybox", tag: "{{ BUSYBOX_TAG }}" },
+  { name: "registry.k8s.io/coredns/coredns", tag: "{{ COREDNS_TAG }}" },
+  { name: "registry.k8s.io/etcd", tag: "{{ ETCD_TAG }}" },
+  { name: "registry.k8s.io/metrics-server-{{ HOST_ARCH }}", tag: "{{ METRICS_SERVER_TAG }}" },
+  { name: "registry.k8s.io/kube-apiserver-{{ HOST_ARCH }}", tag: "{{ KUBERNETES_TAG }}" },
+  { name: "registry.k8s.io/kube-controller-manager-{{ HOST_ARCH }}", tag: "{{ KUBERNETES_TAG }}" },
+  { name: "registry.k8s.io/kube-proxy-{{ HOST_ARCH }}", tag: "{{ KUBERNETES_TAG }}" },
+  { name: "registry.k8s.io/kube-scheduler-{{ HOST_ARCH }}", tag: "{{ KUBERNETES_TAG }}" },
+  { name: "registry.k8s.io/pause", tag: "{{ PAUSE_TAG }}" },
+  { name: "osixia/keepalived", tag: "{{ KEEPALIVED_TAG }}" },
+  { name: "nginx", tag: "{{ NGINX_TAG }}" },
+  { name: "haproxy", tag: "{{ HAPROXY_TAG }}" },
+  { name: "kubernetesui/metrics-scraper-{{ HOST_ARCH }}", tag: "{{ METRICS_SCRAPER_TAG }}" },
+  { name: "kubernetesui/dashboard-{{ HOST_ARCH }}", tag: "{{ DASHBOARD_TAG }}" },
+  { name: "plndr/kube-vip", tag: "{{ KUBE_VIP_TAG }}" },
+]
+{% endraw %}

@@ -1,0 +1,28 @@
+#
+# Install the k8n package in a secure way.
+# Background: the official k8s yum repos are configured to exclude the k8n packages by default,
+# so that they cannot be accidentally upgraded. Hence the exclude needs to be overridden.
+# This however is a dnf-specific feature, so that we need to perform some conditional magic here.
+#
+---
+- name: Check if dnf is available
+  ansible.builtin.command: which dnf # noqa no-changed-when
+  register: DNF_CHECK
+  ignore_errors: true
+
+- name: Install or upgrade kubelet, kubectl, kubeadm, kubernetes-cni (if dnf is available)
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+    disable_excludes: all
+  with_items:
+    - kubeadm-{{ KUBERNETES_VERSION }}
+  when: DNF_CHECK.rc == 0
+
+- name: Install or upgrade kubelet, kubectl, kubeadm, kubernetes-cni (generic version)
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - kubeadm-{{ KUBERNETES_VERSION }}
+  when: DNF_CHECK.rc != 0

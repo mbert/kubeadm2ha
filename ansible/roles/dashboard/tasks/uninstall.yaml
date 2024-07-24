@@ -4,19 +4,19 @@
 ---
 
 - name: Uninstall service metrics-server
-  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete service metrics-server" # noqa no-changed-when
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete service metrics-server" # noqa no-changed-when yaml[line-length]
 
 - name: Uninstall service dashboard-metrics-scraper
-  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kubernetes-dashboard delete service dashboard-metrics-scraper" # noqa no-changed-when
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kubernetes-dashboard delete service dashboard-metrics-scraper" # noqa no-changed-when yaml[line-length]
 
 - name: Uninstall service kubernetes-dashboard
-  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kubernetes-dashboard delete service kubernetes-dashboard" # noqa no-changed-when
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kubernetes-dashboard delete service kubernetes-dashboard" # noqa no-changed-when yaml[line-length]
 
 - name: Uninstall deployment metrics-server
-  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete deployment metrics-server" # noqa no-changed-when
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kube-system delete deployment metrics-server" # noqa no-changed-when yaml[line-length]
 
 - name: Uninstall deployment dashboard-metrics-scraper
-  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kubernetes-dashboard delete deployment dashboard-metrics-scraper" # noqa no-changed-when
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kubernetes-dashboard delete deployment dashboard-metrics-scraper" # noqa no-changed-when yaml[line-length]
 
 - name: Uninstall deployment kubernetes-dashboard
-  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kubernetes-dashboard delete deployment kubernetes-dashboard" # noqa no-changed-when
+  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl -n kubernetes-dashboard delete deployment kubernetes-dashboard" # noqa no-changed-when yaml[line-length]

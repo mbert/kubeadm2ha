@@ -5,60 +5,87 @@
 # - the etcd data dir /var/lib/etcd/default.etcd is deleted
 # - kubelet is disabled and stopped
 #
---- 
+---
 
 - name: Stop and disable keepalived cluster
-  ansible.builtin.service: name=keepalived enabled=false state=stopped
+  ansible.builtin.service:
+    name: keepalived
+    enabled: false
+    state: stopped # noqa ignore-errors
   when: "'masters' in group_names"
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Disable and stop etcd
-  ansible.builtin.service: name=etcd enabled=false state=stopped
+  ansible.builtin.service:
+    name: etcd
+    enabled: false
+    state: stopped # noqa ignore-errors
   when: "'masters' in group_names"
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Disable and stop kubelet
-  ansible.builtin.service: name=kubelet enabled=false state=stopped
-  ignore_errors: yes
+  ansible.builtin.service:
+    name: kubelet
+    enabled: false
+    state: stopped # noqa ignore-errors
+  ignore_errors: true
 
 - name: Run 'kubeadm reset'
-  ansible.builtin.shell: "if which kubeadm >/dev/null; then kubeadm reset -f; else /bin/true; fi" # noqa no-changed-when
-  ignore_errors: yes
+  ansible.builtin.shell: "if which kubeadm >/dev/null; then kubeadm reset -f; else /bin/true; fi" # noqa no-changed-when ignore-errors
+  ignore_errors: true
 
 - name: Clean up ~/.kube
-  ansible.builtin.file: path=/root/.kube state=absent
+  ansible.builtin.file:
+    path: /root/.kube
+    state: absent
   when: "'masters' in group_names"
 
 - name: Clean up /var/run/dockershim.sock
-  ansible.builtin.file: path=/var/run/dockershim.sock state=absent
+  ansible.builtin.file:
+    path: /var/run/dockershim.sock
+    state: absent
   when: "'masters' in group_names"
 
 - name: Clean up /var/lib/etcd.default.etcd on all masters
-  ansible.builtin.file: path=/var/lib/etcd/member state=absent
+  ansible.builtin.file:
+    path: /var/lib/etcd/member
+    state: absent
   when: "'masters' in group_names"
 
 - name: Clean up /var/lib/cni on all nodes
-  ansible.builtin.file: path=/var/lib/cni state=absent
+  ansible.builtin.file:
+    path: /var/lib/cni
+    state: absent
 
 - name: Clean up /var/lib/kubelet on all nodes
-  ansible.builtin.file: path=/var/lib/kubelet state=absent
+  ansible.builtin.file:
+    path: /var/lib/kubelet
+    state: absent
 
 - name: Re-create /var/lib/kubelet on all nodes
-  ansible.builtin.file: path=/var/lib/kubelet state=directory mode=0755
+  ansible.builtin.file:
+    path: /var/lib/kubelet
+    state: directory
+    mode: "0755"
 
 - name: Delete cni0 network device
-  ansible.builtin.command: "ip link delete cni0" # noqa no-changed-when
-  ignore_errors: yes
+  ansible.builtin.command: "ip link delete cni0" # noqa no-changed-when ignore-errors
+  ignore_errors: true
 
 - name: Clean up etcd certificates on all masters
-  ansible.builtin.file: path=/etc/etcd/pki state=absent
+  ansible.builtin.file:
+    path: /etc/etcd/pki
+    state: absent
   when: "'masters' in group_names"
 
 - name: Clean up etcd certificates on all masters
-  ansible.builtin.file: path=/etc/kubernetes/pki state=absent
+  ansible.builtin.file:
+    path: /etc/kubernetes/pki
+    state: absent
   when: "'masters' in group_names"
 
 - name: Clean up /etc/kubernetes/manifests directory
-  ansible.builtin.file: path=/etc/kubernetes/manifests state=absent
+  ansible.builtin.file:
+    path: /etc/kubernetes/manifests
+    state: absent
   when: "'masters' in group_names"
-

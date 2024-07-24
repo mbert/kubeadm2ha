@@ -4,7 +4,8 @@
 ---
 
 - name: Make sure that we're on a supported NETWORK_PLUGIN
-  ansible.builtin.fail: msg="Unsupported NETWORK_PLUGIN. Check roles/primary_master/tasks/*.yaml"
+  ansible.builtin.fail:
+    msg: "Unsupported NETWORK_PLUGIN. Check roles/primary_master/tasks/*.yaml"
   when: "NETWORK_PLUGIN not in [ 'flannel', 'weavenet', 'calico' ]"
 
 - name: Installing CNI plugin for weavenet...
@@ -20,8 +21,10 @@
   when: NETWORK_PLUGIN == 'calico'
 
 - name: Copy network plugin yaml
-  ansible.builtin.copy: "src=/tmp/net.yaml dest=/root/net.yaml mode=0644"
+  ansible.builtin.copy:
+    src: /tmp/net.yaml
+    dest: /root/net.yaml
+    mode: "0644"
 
 - name: Apply network plugin yaml
   ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl apply -f /root/net.yaml" # noqa no-changed-when
-

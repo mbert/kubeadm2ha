@@ -2,8 +2,7 @@
 # Global settings
 #---------------------------------------------------------------------
 global
-    log /dev/log local0
-    log /dev/log local1 notice
+    log stdout format raw local0
     daemon
 
 #---------------------------------------------------------------------
@@ -22,31 +21,34 @@ defaults
     timeout http-request    10s
     timeout queue           20s
     timeout connect         5s
-    timeout client          20s
-    timeout server          20s
+    timeout client          35s
+    timeout server          35s
     timeout http-keep-alive 10s
     timeout check           10s
 
+
 #---------------------------------------------------------------------
-# apiserver frontend which proxys to the masters
+# apiserver frontend which proxys to the control plane nodes
 #---------------------------------------------------------------------
 frontend apiserver
     bind *:{{ APISERVER_LB_PORT }}
     mode tcp
     option tcplog
-    default_backend apiserver
+    default_backend apiserverbackend
+
 
 #---------------------------------------------------------------------
 # round robin balancing for apiserver
 #---------------------------------------------------------------------
-backend apiserver
-    option httpchk GET /healthz
+backend apiserverbackend
+    option httpchk
+
+    http-check connect ssl
+    http-check send meth GET uri /healthz
     http-check expect status 200
+
     mode tcp
-    option ssl-hello-chk
     balance     roundrobin
 {% for host in groups['masters'] %}
-        server {{host}} {{ hostvars[host]['ansible_default_ipv4']['address'] }}:6443 check
+    server {{ host }} {{ hostvars[host]['ansible_default_ipv4']['address'] }}:6443 check verify none
 {% endfor %}
-
-

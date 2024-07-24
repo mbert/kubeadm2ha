@@ -1,6 +1,0 @@
-#
-# Uninstall fluentd
-#
----
-- name: Uninstall Fluentd
-  ansible.builtin.shell: "export KUBECONFIG=/etc/kubernetes/admin.conf; kubectl delete -f /root/setup/fluentd/" # noqa no-changed-when

@@ -4,28 +4,41 @@
 ---
 - name: Make sure that the kubeadm output has been saved
   delegate_to: localhost
-  ansible.builtin.file: "path=/tmp/join-secondary-master.sh state=file"
+  ansible.builtin.file:
+    path: /tmp/join-secondary-master.sh
+    state: file
 
 - name: Make sure that kubelet is not up
-  ansible.builtin.service: name=kubelet state=stopped
+  ansible.builtin.service:
+    name: kubelet
+    state: stopped
 
 - name: Remove /etc/kubernetes/admin.conf if it (still) exists
-  ansible.builtin.file: "path=/etc/kubernetes/admin.conf state=absent"
+  ansible.builtin.file:
+    path: /etc/kubernetes/admin.conf
+    state: absent
 
 - name: Unarchive master-certs.tar.gz to /etc/kubernetes/pki/ (external etcd only)
-  ansible.builtin.unarchive: "copy=yes src=/tmp/master-certs.tar.gz dest=/etc/kubernetes/pki/"
-  when: "ETCD_HOSTING == 'external'"
+  ansible.builtin.unarchive:
+    copy: true
+    src: /tmp/master-certs.tar.gz
+    dest: /etc/kubernetes/pki/
+  when: "ETCD_HOSTING ==  'external'"
 
 - name: Generate 'kubeadm' configuration file (external etcd only)
-  ansible.builtin.template: "src=kubeadm-init.yaml.j2 dest=/root/kubeadm-init.yaml mode=0644"
- 
+  ansible.builtin.template:
+    src: kubeadm-init.yaml.j2
+    dest: /root/kubeadm-init.yaml
+    mode: "0644"
+
 - name: Remove /etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf on secondary masters (external etcd only)
-  ansible.builtin.file: "path=/etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf state=absent"
-  when: "ETCD_HOSTING == 'external'"
+  ansible.builtin.file:
+    path: /etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf
+    state: absent
+  when: "ETCD_HOSTING ==  'external'"
 
 - name: Setup secondary masters one by one
   ansible.builtin.include_tasks: secondary-master.yaml
   with_items: "{{ groups['secondary_masters'] }}"
   loop_control:
     loop_var: master
-

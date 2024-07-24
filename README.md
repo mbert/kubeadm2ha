@@ -1,23 +1,25 @@
 # kubeadm2ha - Automatic setup of HA clusters using kubeadm
 
-A set of scripts and documentation for adding redundancy (etcd cluster, multiple masters) to a cluster set up with kubeadm 1.8. This code is intended to demonstrate and simplify creation of redundant-master setups while still using kubeadm which is still lacking this functionality. See [kubernetes/kubeadm/issues/546](https://github.com/kubernetes/kubeadm/issues/546) for discussion on this.
+This code largely follows the instructions published on [kubernetes.io](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/) and provides a convenient automation for setting up a highly-available Kubernetes cluster (i.e. with more than one master node) and the Dashboard. It also provides limited support for installing and running systems not connected to the internet.
 
-This code largely follows the instructions published in [cookeem/kubeadm-ha](https://github.com/cookeem/kubeadm-ha) and added only minor contribution in changing little bits for K8s 1.8 compatibility and automating things.
+# July 2024: removal of additional software
+
+As of 2024 this repository no longer contains automatic installation support for additional software (like e.g. the EFK stack, etcd operator, ...) and focuses solely on the core: Kubernetes and the Dashboard.
+Upholding support was no longer feasible because one after the other these components were abandoned by their respective developers.
 
 ## Overview
 
-This repository contains a set of ansible scripts to do this. There are three playbooks:
+This repository contains a set of ansible scripts to do this. There are these playbooks:
 
-1. _playbook-01-cluster-setup.yaml_ sets up a complete cluster including the HA setup. See below for more details.
-2. _playbook-51-cluster-uninstall.yaml_ removes data and configuration files to a point that _cluster-setup.yaml_ can be used again.
-3. _playbook-02-dashboard.yaml_ sets up the dashboard including influxdb/grafana.
-4. _playbook-03-local-access.yaml_ creates a patched _admin.conf_ file in _/tmp/<my-cluster-name>-admin.conf_. After copying it to _~/.kube/config_ remote _kubectl_ access via V-IP / load balancer can be tested. 
-6. _playbook-04-prometheus-operator.yaml_ sets up the prometheus-operator.
-7. _playbook-05-efk-stack.yaml_ sets up an EFK stack for centralised logging.
-8. _playbook-00-cluster-images.yaml_ prefetches all images needed for Kubernetes operations and transfers them to the target hosts.
-9. _playbook-52-uninstall-dashboard.yaml_ removes the dashboard.
-10. _playbook-53-uninstall-efk-stack.yaml_ removes the EFK stack including Fluentd cache and Elasticsearch data files.
-11. _playbook-31-cluster-upgrade.yaml_ upgrades a cluster.
+1. _playbook-00-os-setup.yaml_ sets up the prerequisites for installing Kubernetes on Oracle Linux 7 nodes.
+2. _playbook-01-cluster-setup.yaml_ sets up a complete cluster including the HA setup. See below for more details.
+3. _playbook-51-cluster-uninstall.yaml_ removes data and configuration files to a point that _cluster-setup.yaml_ can be used again.
+4. _playbook-02-dashboard.yaml_ sets up the dashboard including influxdb/grafana.
+5. _playbook-03-local-access.yaml_ creates a patched _admin.conf_ file in _/tmp/<my-cluster-name>-admin.conf_. After copying it to _~/.kube/config_ remote _kubectl_ access via V-IP / load balancer can be tested. 
+6. _playbook-00-cluster-images.yaml_ prefetches all images needed for Kubernetes operations and transfers them to the target hosts.
+7. _playbook-52-uninstall-dashboard.yaml_ removes the dashboard.
+8. _playbook-31-cluster-upgrade.yaml_ upgrades a cluster.
+9. _playbook-zz-zz-configure-imageversions.yaml_ updates the image tag names in the file _vars/imageversions.yaml_.
 
 Due to the frequent upgrades to both Kubernetes and _kubeadm_, these scripts cannot support all possible versions. For both, fresh installs and upgrades, please refer to the value of `KUBERNETES_VERSION` in _ansible/group_vars/all.yaml_ to find out which target version has been used for developing them. Other versions may work, too, but you may turn out to be the first to try this. Please refer to the following documents for compatibility information:
 - [https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/)
@@ -27,19 +29,25 @@ Due to the frequent upgrades to both Kubernetes and _kubeadm_, these scripts can
 
 Ansible version 2.4 or higher is required. Older versions will not work. 
 
-On the target environment, some settings for successful installation of Kubernetes are necessary. The "Before you begin" section in the [official kubernetes documentation](https://kubernetes.io/docs/setup/independent/install-kubeadm/) applies, nevertheless here is a convenience list of things to take care of:
-1. Set the value of `/proc/sys/net/bridge/bridge-nf-call-iptables` to `1`. There may be different, distro-dependent ways to accomplish this in a persistent way, however most people will get away by editing _/etc/sysctl.conf_.
-2. Load the `ip_vs` kernel module. Most people will want to create a file in _/etc/modprobe.de_ for this.
-3. Disable swap. Make sure to edit _/etc/fstab_ to remove the swap mount from it.
-4. If you want to use the EFK stack, you'll also have to define the following groups: _elasticsearch_hot_ (for hosts with fast hardware, more RAM on which the "hot" ES instances will be run, mutually exclusive with _elasticsearch_warm_), _elasticsearch_warm_ (for hosts with more disk space on which the "warm" ES instances will be run, mutually exclusive with _elasticsearch_hot_), _elasticsearch_ (all elasticsearch hosts). See the inventory _md-kubernetes.inventory_ for an example. The Elasticsearch data nodes require a `nofile` limit not lower than `65536` which is well above of the defaults on some systems. If using the JSON-based configuration file _/etc/docker/daemon.json_, you may have to add this: `"default-ulimits":{"nofile":{"Name":"nofile","Hard":65536,"Soft":65536}}`.
-
-## Configuration
+## Prepare an environment for ansible
 
 In order to use the ansible scripts, at least two files need to be configured:
 
 1. Either edit _my-cluster.inventory_ or create your own. The inventory _must_ define the following groups: 
  _primary_master_ (a single machine on which _kubeadm_ will be run), _secondary_masters_ (the other masters), _masters_ (all masters), _minions_ (the worker nodes), _nodes_ (all nodes), _etcd_ (all machines on which etcd is installed, usually the masters).
-2. Create a file named as the group defined in your inventory file in _group_vars_ overriding the defaults from _all.yaml_ where necessary. Note that if you set `SETUP_DOCKER` to `yes`, the device for _/var/lib/docker_ must exist and be empty, it will be formatted and mounted automatically. You may also decide to change some of the defaults for your environment: `LOAD_BALANCING` (`kube-vip`, `haproxy` or `nginx`), `NETWORK_PLUGIN` (`weavenet`, `flannel` or `calico`) and `ETCD_HOSTING` (`stacked` if running on the masters, else `external`).
+2. Create a file named as the group defined in your inventory file in _group_vars_ overriding the defaults from _all.yaml_ where necessary. You may also decide to change some of the defaults for your environment: `LOAD_BALANCING` (`kube-vip`, `haproxy` or `nginx`), `NETWORK_PLUGIN` (`weavenet`, `flannel` or `calico`) and `ETCD_HOSTING` (`stacked` if running on the masters, else `external`).
+
+## Prepare your hosts
+
+On the target environment, some settings for successful installation of Kubernetes are necessary. The "Before you begin" section in the [official kubernetes documentation](https://kubernetes.io/docs/setup/independent/install-kubeadm/) applies, nevertheless here is a convenience list of things to take care of:
+1. Set the value of `/proc/sys/net/bridge/bridge-nf-call-iptables` to `1`. There may be different, distro-dependent ways to accomplish this in a persistent way, however most people will get away by editing _/etc/sysctl.conf_.
+2. Load the `ip_vs` kernel module. Most people will want to create a file in _/etc/modprobe.de_ for this.
+3. Disable swap. Make sure to edit _/etc/fstab_ to remove the swap mount from it.
+4. Make sure to have enough disk space on _/var/lib/docker_, ideally you should set up a dedicated partition and mount it, so that if downloaded docker images exceed the available space the operating system still works.
+5. Make sure that the docker engine is installed. Other container engine implementations may work but have not been tested.
+6. The primary master host requires passwordless `ssh` access to all other cluster hosts as `root`. After successful installation this can be removed if desired.
+7. The primary master host needs to be able to resolve all other cluster host names as configured in the environments inventory files (see previous step), either via DNS or by entries in _/etc/hosts_.
+8. Activate and start `containerd` and `docker`.
 
 ## What the cluster setup does
 1. Set up an _etcd_ cluster with self-signed certificates on all hosts in group _etcd._.
@@ -49,16 +57,7 @@ In order to use the ansible scripts, at least two files need to be configured:
 5. Use _kubeadm_ to join all hosts in the group _minions_. 
 6. Sets up a service account 'admin-user' and cluster role binding for the role 'cluster-admin' for remote access (if wanted).
 
-## What the images setup does
-
-1. Pull all required images locally (hence you need to make sure to have docker installed on the host from which you run ansible).
-2. Export the images to tar files.
-3. Copy the tar files over to the target hosts.
-4. Import the images from the tar files on the target hosts.
-
-## What the prometheus-operator setup does
-
-1. Install prometheus-operator, so that applications can use it for creating their own _prometheus_ instances, service monitors etc.
+Note that this step assumes that the Kubernetes software packages can be downloaded from some repository (like `yum` or `apt`). If your system has no connection to the internet you will need to set up a repository in your network and install the required packages beforehand.
 
 ## What the images setup does
 
@@ -66,6 +65,13 @@ In order to use the ansible scripts, at least two files need to be configured:
 2. Export the images to tar files.
 3. Copy the tar files over to the target hosts.
 4. Import the images from the tar files on the target hosts.
+
+## What the image tag update does
+
+1. Detect the currently latest image tags with respect to the configured Kubernetes version
+2. Overwrite the file _vars/imageversions.yaml_ with the latest image names and versions
+
+Note that the image versions configured by this playbook will not necessarly work, as more recent versions may introduce incompatibilities, hence it they are merely a starting point and a helper for K8S updates.
 
 ## Setting up the dashboard
 
@@ -76,35 +82,24 @@ The _playbook-02-dashboard.yaml_ playbook does the following:
 
 For accessing the dashbord run `kubectl proxy` on your local host (which requires to have configured `kubectl` for your local host, see _Configuring local access_ below for automating this), then access via [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/login](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/login)
 
-The dashboard will ask you to authenticate. There are several options:
+The dashboard will ask you to authenticate. A user with admin privileges has been created during installation. In order to log in as this user, use this command to generate a token:
 
-1. Use the token of an existing service account with sufficient privileges. On many clusters this command works for root-like access:
+    kubectl -n kubernetes-dashboard create token admin-user
 
-    ```
-    kubectl -n kube-system describe secrets `kubectl -n kube-system get secrets | awk '/clusterrole-aggregation-controller/ {print $1}'` | awk '/token:/ {print $2}'
-    ```
-
-2. Use the token of the 'admin-user' service account (if it exists):
-
-    ```
-    kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
-    ```
+Copy the token from the console and use it for logging in to the dashboard.
 
 3. Use the _playbook-03-local-access.yaml_ playbook to generate a configuration file. That file can be copied to _~/.kube/config_ for local `kubectl` access. It can also be uploaded as _kubeconfig_ file in the dashboard's login dialogue.
-
-## Setting up the EFK stack for centralised logging
-
-1. Elasticsearch is installed as "hot/warm", i.e. all indices older than 3 days are moved from the "hot" to the "warm" instances automatically. It is assumed that the "hot" instances run on machines with faster hardware and probably less disk space. If `kubectl proxy` is running, the ES instance can be accessed through this URL: [http://localhost:8001/api/v1/namespaces/kube-system/services/elasticsearch-logging-client:9200/proxy/_search?q=*](http://localhost:8001/api/v1/namespaces/kube-system/services/elasticsearch-logging-client:9200/proxy/_search?q=*)
-
-2. Kibana can be used for accessing the logs from Elasticsearch. If `kubectl proxy` is running it can be accessed through this URL: [http://localhost:8001/api/v1/namespaces/kube-system/services/kibana-logging:http/proxy/app/kibana#/](http://localhost:8001/api/v1/namespaces/kube-system/services/kibana-logging:http/proxy/app/kibana#/)
-
-3. Fluentd collects the logs from the running pods. In order to normalise log files using different formats, you will most likely want to edit the the configmap fluentd uses (see the file _fluentd-es-configmap.yaml_ in _roles/fluentd/files_). A working, while not terribly efficient way to manage this is the use of the [rewrite_tag_filter](https://docs.fluentd.org/v1.0/articles/out_rewrite_tag_filter) as a multiplexer depending on the different log formats and then the [parser](https://docs.fluentd.org/v1.0/articles/parser-plugin-overview) filter with one section per (rewritten) tag for the actual parsing and normalising (for normalising different time/date formats, the [record_transformer](https://docs.fluentd.org/v1.0/articles/filter_record_transformer) filter can be used). 
 
 ## Configuring local access
 
 Running the _playbook-03-local-access.yaml_ playbook creates a file _/tmp/<my-cluster-name>-admin.conf_ that can be used as _~/.kube/config_. If the dashboard has been installed (see above) the file will contain the 'admin-user' service account's token, so that for both `kubectl` and the dashboard root-like access is possible. If that service account does not exist, the client-side certificate will be used instead which is OK for testing environments but is generally considered not recommendable because the client-side certificates are not supposed to leave their master host.
 
 ## Upgrading a cluster
+
+**Note: this automatic upgrade will delete local pod storage. See below whether this is relevant for you or not:**
+Pods may keep local data (e.g. the dashboard and its metrics components).
+Whether such data needs to be preserved or not, depends on your application.
+If the answer is yes, then don't use this here; upgrade manually instead.
 
 For upgrading a cluster several steps are needed:
 
@@ -119,7 +114,9 @@ For upgrading a cluster several steps are needed:
 
 First thing to do is find out to which version you want to upgrade. We only support systems where the version for all Kubernetes-related components (native packages, like _kubelet_, _kubectl_, _kubeadm_) and whatever they will run in containers when installed (API Server, Controller Manager, Scheduler, Kube Proxy) is the same. Hence, after having determined the version to upgrade to, update the variable `KUBERNETES_VERSION` either in _group_vars/all.yaml_ (global) or in _group_vars/<your-environment>.yaml_ (your environment only).
 
-Next, you need to be able to upgrade the _kubelet_, _kubectl_, _kubeadm_ and - if upgraded, too - _kubernetes-cni_ on your cluster's machines using their package manager (_yum_, _apt_ or whatever). If you are connected to the internet, this is a no-brainer. However in an isolated environment without internet access you will need to download these packages elsewhere and then make them available for your nodes, so that they can be installed using their package managers. This will most likely lead to creating local repos on the nodes or on a server in the same network and configure the package managers to use them. Since the steps required for this will be different for all the various Linux distributions we will not cover this here. Once you can simply run something like `yum install -y kubeadm-<KUBERNETES_VERSION>` (for a Redhat platform) on your nodes you should be fine.
+Next, you need to be able to upgrade the _kubelet_, _kubectl_, _kubeadm_ and - if upgraded, too - _kubernetes-cni_ on your cluster's machines using their package manager (_yum_, _apt_ or whatever). If you are connected to the internet, this is a no-brainer; the automatic upgrade will actually take care of this.
+
+However in an isolated environment without internet access you will need to download these packages elsewhere and then make them available for your nodes, so that they can be installed using their package managers. This will most likely lead to creating local repos on the nodes or on a server in the same network and configure the package managers to use them. If your system is like that, again, the automatic upgrade will take care of upgradign the packages for you. I strongly recommend following this pattern, because the package upgrade needs to take place at a specific moment during upgrade which will effectively force you to perform the upgrade manually in the end.
 
 Note that upgrading _etcd_ is only supported if it is installed on the master nodes (`ETCD_HOSTING` is `stacked`). Else you will have to upgrade _etcd_ manually which is beyond scope here.
 
@@ -150,6 +147,7 @@ The upgrade is not fully free of disruptions:
 If any of these is unacceptable, a fully automated upgrade process does not really make any sense because deep knowledge of the application running in a respective cluster is required to work around this.
 Hence in that case a manual upgrade process is recommended.
 
+
 ### If something goes wrong
 
 If the upgrade fails the situation afterwards depends on the phase in which things went wrong.
@@ -163,8 +161,6 @@ If _kubeadm_ on one of the secondary masters failed you still have a working, up
 If upgrading the software packages (i.e. the second half of the playbook) failed, you still have a working cluster. You may try to fix the problems and continue manually. See the _.yaml_ files under _roles/upgrade-nodes/tasks_ for what you need to do.
 
 If you are trying out the upgrade on a reference system, you may have to downgrade at some point to start again. See the sequence for reinstalling a cluster below for an instruction how to do this (hint: it is important to erase the some base software packages before setting up a new cluster based on a lower Kubernetes version).
-
-
 
 ## Examples
 
@@ -203,6 +199,4 @@ Sequence for reinstalling a cluster:
 
 This is a preview in order to obtain early feedback. It is not done yet. Known limitations are:
 
-- Not yet finished: support for EFK stack (will need to see whether this will work at all)
-- The setup with 'kube-vip' as load balancer / VIP manager does not work completely on some systems. In particular using LB ports other than 6443 often fails.
 - The code has been tested almost exclusively in a Redhat-like (RHEL) environment. More testing on other distros is needed.

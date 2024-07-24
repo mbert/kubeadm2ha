@@ -1,9 +1,0 @@
-
-#
-# Variables for the 'my-cluster' environment
-#
---- 
-CLUSTER_NAME: my-cluster
-MASTER_VIP: 192.168.0.50
-#NETWORK_PLUGIN: flannel
-NETWORK_PLUGIN: weavenet

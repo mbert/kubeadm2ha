@@ -1,8 +1,7 @@
-
 #
 # Variables for the 'md-playground' environment
 #
---- 
+---
 CLUSTER_NAME: md-playground
-#NETWORK_PLUGIN: flannel
+# NETWORK_PLUGIN: flannel
 NETWORK_PLUGIN: weavenet

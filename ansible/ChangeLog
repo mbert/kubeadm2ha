@@ -1,3 +1,8 @@
+July 2024:
+- add automatic configuration of image tags for saving cluster images
+- remove additional software (anything but Kubernetes and Dashboard) from
+  cluster setup
+
 July 2023:
 - update to basic ansible code in order to support the most recent versions of k8s and the other software installable by it
 - rename playbooks for more consistency

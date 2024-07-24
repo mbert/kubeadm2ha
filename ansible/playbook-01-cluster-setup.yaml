@@ -1,176 +1,224 @@
 #
 # Playbook to set up a Kubernetes cluster.
 #
---- 
+---
 - name: Check preconditions on primary master
   hosts: primary_master
   remote_user: root
-  gather_facts: no
-  any_errors_fatal: yes
+  gather_facts: false
+  any_errors_fatal: true
   tasks:
-  - name: Checking primary master...
-    ansible.builtin.include_tasks: "{{ playbook_dir }}/roles/usual_suspects/tasks/primary_master.yaml"
+    - name: Checking primary master...
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/roles/usual_suspects/tasks/primary_master.yaml"
   tags:
-  - precon_primary_master
-  - setup_system
+    - precon-primary-master
+    - setup-system
 
 - name: Prepare Nodes
   hosts: nodes
   remote_user: root
-  gather_facts: yes
-  any_errors_fatal: yes
+  gather_facts: true
+  any_errors_fatal: true
   roles:
-  - prepare_nodes
+    - prepare_nodes
   tags:
-  - prepare_nodes
-  - setup_system
+    - prepare-nodes
+    - setup-system
 
 - name: Check preconditions on all nodes
   hosts: nodes
   remote_user: root
-  gather_facts: no
-  any_errors_fatal: yes
+  gather_facts: false
+  any_errors_fatal: true
   roles:
-  - usual_suspects
+    - usual_suspects
   tags:
-  - usual_suspects
-  - setup_system
+    - usual-suspects
+    - setup-system
 
 - name: Kube-VIP
   hosts: masters
   remote_user: root
-  gather_facts: yes
-  any_errors_fatal: yes
+  gather_facts: true
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Read Kube-VIP image tags
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/vars/imageversions.yaml"
   roles:
-  - {role: kube_vip, when: "LOAD_BALANCING == 'kube-vip'" }
+    - {role: kube_vip, when: "LOAD_BALANCING == 'kube-vip'" }
   tags:
-  - kube_vip
-  - setup_infrastructure
+    - kube-vip
+    - setup-infrastructure
 
 - name: Keepalived
   hosts: masters
   remote_user: root
-  gather_facts: yes
-  any_errors_fatal: yes
+  gather_facts: true
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Read Kube-VIP image tags
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/vars/imageversions.yaml"
   roles:
-  - {role: keepalived, when: "LOAD_BALANCING != 'kube-vip'" }
+    - {role: keepalived, when: "LOAD_BALANCING != 'kube-vip'" }
   tags:
-  - keepalived
-  - setup_infrastructure
+    - keepalived
+    - setup-infrastructure
 
 - name: NGINX
   hosts: masters
   remote_user: root
-  gather_facts: yes
-  any_errors_fatal: yes
+  gather_facts: true
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Read Kube-VIP image tags
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/vars/imageversions.yaml"
   roles:
-  - {role: nginx, when: "LOAD_BALANCING == 'nginx'" }
+    - {role: nginx, when: "LOAD_BALANCING == 'nginx'" }
   tags:
-  - nginx
-  - setup_infrastructure
+    - nginx
+    - setup-infrastructure
 
 - name: HAProxy
   hosts: masters
   remote_user: root
-  gather_facts: yes
-  any_errors_fatal: yes
+  gather_facts: true
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Read Kube-VIP image tags
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/vars/imageversions.yaml"
   roles:
-  - {role: haproxy, when: "LOAD_BALANCING == 'haproxy'" }
+    - {role: haproxy, when: "LOAD_BALANCING == 'haproxy'" }
   tags:
-  - haproxy
-  - setup_infrastructure
+    - haproxy
+    - setup-infrastructure
 
 - name: Deploy external etcd
   hosts: etcd
   remote_user: root
-  gather_facts: yes
-  any_errors_fatal: yes
+  gather_facts: true
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Read Kube-VIP image tags
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/vars/imageversions.yaml"
   roles:
-  - {role: external_etcd, when: "ETCD_HOSTING == 'external'" }
+    - {role: external_etcd, when: "ETCD_HOSTING == 'external'" }
   tags:
-  - external_etcd
-  - setup_k8s
+    - external-etcd
+    - setup-k8s
 
 - name: Gather facts for etcd hosts
   hosts: etcd
   remote_user: root
-  gather_facts: yes
-  any_errors_fatal: yes
+  gather_facts: true
+  any_errors_fatal: true
   tags:
-  - masters
-  - primary_master
-  - setup_k8s
+    - masters
+    - primary-master
+    - setup-k8s
+
+- name: Kube-VIP workaround setup
+  hosts: primary_master
+  remote_user: root
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: Setup temporary use of super-admin.yaml for kube-vip
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/roles/kube_vip/tasks/pre_bootstrap.yaml"
+      when: LOAD_BALANCING == 'kube-vip'
+  tags:
+    - masters
+    - primary-master
+    - setup-k8s
+    - kube-vip
 
 - name: Set up primary master
   hosts: primary_master
   remote_user: root
-  gather_facts: yes
-  any_errors_fatal: yes
+  gather_facts: true
+  any_errors_fatal: true
   roles:
-  - primary_master
-  - network_plugin
+    - primary_master
+    - network_plugin
   tags:
-  - masters
-  - primary_master
-  - setup_k8s
+    - masters
+    - primary-master
+    - setup-k8s
+
+- name: Kube-VIP workaround cleanup
+  hosts: primary_master
+  remote_user: root
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: Roll back temporary use of super-admin.yaml for kube-vip
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/roles/kube_vip/tasks/post_bootstrap.yaml"
+      when: LOAD_BALANCING == 'kube-vip'
+  tags:
+    - masters
+    - primary-master
+    - setup-k8s
 
 - name: Set up secondary masters
   hosts: secondary_masters
   remote_user: root
-  gather_facts: yes
-  any_errors_fatal: yes
+  gather_facts: true
+  any_errors_fatal: true
   roles:
-  - secondary_masters
+    - secondary_masters
   tags:
-  - masters
-  - secondary_masters
-  - setup_k8s
+    - masters
+    - secondary-masters
+    - setup-k8s
 
 - name: Make some adjustments for HA
   hosts: masters
   remote_user: root
-  gather_facts: yes
-  any_errors_fatal: yes
+  gather_facts: true
+  any_errors_fatal: true
   roles:
-  - ha_settings
+    - ha_settings
   tags:
-  - ha_settings
-  - masters
-  - setup_k8s
+    - ha-settings
+    - masters
+    - setup-k8s
 
 - name: Create join token
   hosts: primary_master
   remote_user: root
-  gather_facts: yes
-  any_errors_fatal: yes
+  gather_facts: true
+  any_errors_fatal: true
   roles:
-  - join_token
+    - join_token
   tags:
-  - join_token
-  - minions
-  - setup_k8s
+    - join-token
+    - minions
+    - setup-k8s
 
 - name: Join minions
   hosts: minions
   remote_user: root
-  gather_facts: yes
-  any_errors_fatal: yes
+  gather_facts: true
+  any_errors_fatal: true
   roles:
-  - minions
+    - minions
   tags:
-  - join-minions
-  - minions
-  - setup_k8s
+    - join-minions
+    - minions
+    - setup-k8s
 
 - name: Label minions
   hosts: nodes
   remote_user: root
-  gather_facts: yes
-  any_errors_fatal: yes
+  gather_facts: true
+  any_errors_fatal: true
   roles:
-  - {role: label_minions, when: "'primary_master' in group_names" }
+    - {role: label_minions, when: "'primary_master' in group_names" }
   tags:
-  - label_minions
-  - minions
-  - setup_k8s
-
+    - label-minions
+    - minions
+    - setup-k8s

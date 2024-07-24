@@ -3,11 +3,17 @@
 #
 ---
 - name: Copy Kubernetes images
-  ansible.builtin.copy: src="/tmp/{{ (item.name + ':' + item.tag) | hash('sha256') }}.tar" dest="/tmp/{{ (item.name + ':' + item.tag) | hash('sha256') }}.tar" mode=0644
+  ansible.builtin.copy:
+    src: "/tmp/{{ (item.name + ':' + item.tag) | hash('sha256') }}.tar"
+    dest: "/tmp/{{ (item.name + ':' + item.tag) | hash('sha256') }}.tar"
+    mode: "0644"
   with_items: "{{ DOCKER_IMAGES }}"
 
 - name: Copy network plugin images
-  ansible.builtin.copy: src="/tmp/{{ item | hash('sha256') }}.tar" dest="/tmp/{{ item | hash('sha256') }}.tar" mode=0644
+  ansible.builtin.copy:
+    src: "/tmp/{{ item | hash('sha256') }}.tar"
+    dest: "/tmp/{{ item | hash('sha256') }}.tar"
+    mode: "0644"
   with_items: "{{ NETWORK_PLUGIN_IMAGE_SPECS_RESULT.stdout_lines }}"
 
 - name: Load Kubernetes images
