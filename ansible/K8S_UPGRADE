@@ -1,0 +1,11 @@
+When a Kubernetes upgrade arrives this ansible setup needs to be upgraded, too.
+
+1. Update the kubernetes version digits in cluster/group_vars/all.yaml
+2. Run the playbook playbook-zz-configure-imageversions.yaml
+
+
+On a remote system already having Kubernetes installed you will need to run the
+Playbook playbook-00-os-setup.yaml in order to install the latest Kubernetes
+version.
+
+

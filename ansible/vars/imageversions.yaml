@@ -6,21 +6,35 @@
 # Versions.
 # When upgrading to a new k8s version, you can use `kubeadm config images list' to print a list of images:tags
 
+BUSYBOX_TAG: "1.37.0"
+COREDNS_TAG: "v1.12.0"
+DASHBOARD_TAG: "v2.7.0"
+ETCD_TAG: "3.5.21-0"
+HAPROXY_TAG: "3.2.3"
+KEEPALIVED_TAG: "2.0.20"
+KUBERNETES_TAG: "v1.33.3"
+KUBE_VIP_TAG: "v1.0.0"
+METRICS_SCRAPER_TAG: "v1.0.8"
+METRICS_SERVER_TAG: "v0.3.6"
+NGINX_TAG: "1.29.0"
+PAUSE_TAG: "3.1"
+
+
 # Images for prefetching
 DOCKER_IMAGES: [
-  { name: "busybox", tag: "1.36.1" },
-  { name: "registry.k8s.io/coredns/coredns", tag: "v1.11.1" },
-  { name: "registry.k8s.io/etcd", tag: "3.5.12-0" },
-  { name: "registry.k8s.io/metrics-server-amd64", tag: "v0.3.6" },
-  { name: "registry.k8s.io/kube-apiserver-amd64", tag: "v1.30.2" },
-  { name: "registry.k8s.io/kube-controller-manager-amd64", tag: "v1.30.2" },
-  { name: "registry.k8s.io/kube-proxy-amd64", tag: "v1.30.2" },
-  { name: "registry.k8s.io/kube-scheduler-amd64", tag: "v1.30.2" },
-  { name: "registry.k8s.io/pause", tag: "3.9" },
-  { name: "osixia/keepalived", tag: "2.0.20" },
-  { name: "nginx", tag: "1.27.0" },
-  { name: "haproxy", tag: "3.0.3" },
-  { name: "kubernetesui/metrics-scraper-amd64", tag: "v1.0.8" },
-  { name: "kubernetesui/dashboard-amd64", tag: "v2.7.0" },
-  { name: "plndr/kube-vip", tag: "v0.8.2" },
+  { name: "busybox", tag: "{{ BUSYBOX_TAG }}" },
+  { name: "registry.k8s.io/coredns/coredns", tag: "{{ COREDNS_TAG }}" },
+  { name: "registry.k8s.io/etcd", tag: "{{ ETCD_TAG }}" },
+  { name: "registry.k8s.io/metrics-server-{{ HOST_ARCH }}", tag: "{{ METRICS_SERVER_TAG }}" },
+  { name: "registry.k8s.io/kube-apiserver-{{ HOST_ARCH }}", tag: "{{ KUBERNETES_TAG }}" },
+  { name: "registry.k8s.io/kube-controller-manager-{{ HOST_ARCH }}", tag: "{{ KUBERNETES_TAG }}" },
+  { name: "registry.k8s.io/kube-proxy-{{ HOST_ARCH }}", tag: "{{ KUBERNETES_TAG }}" },
+  { name: "registry.k8s.io/kube-scheduler-{{ HOST_ARCH }}", tag: "{{ KUBERNETES_TAG }}" },
+  { name: "registry.k8s.io/pause", tag: "{{ PAUSE_TAG }}" },
+  { name: "osixia/keepalived", tag: "{{ KEEPALIVED_TAG }}" },
+  { name: "nginx", tag: "{{ NGINX_TAG }}" },
+  { name: "haproxy", tag: "{{ HAPROXY_TAG }}" },
+  { name: "kubernetesui/metrics-scraper-{{ HOST_ARCH }}", tag: "{{ METRICS_SCRAPER_TAG }}" },
+  { name: "kubernetesui/dashboard-{{ HOST_ARCH }}", tag: "{{ DASHBOARD_TAG }}" },
+  { name: "plndr/kube-vip", tag: "{{ KUBE_VIP_TAG }}" },
 ]

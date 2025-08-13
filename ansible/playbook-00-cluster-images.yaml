@@ -35,7 +35,7 @@
   tasks:
     - name: Make sure that docker is installed on the local host
       delegate_to: localhost
-      ansible.builtin.command: "which docker" # noqa no-changed-when
+      ansible.builtin.shell: "which docker" # noqa no-changed-when
       run_once: true
     - name: Generate script for pulling and saving images
       delegate_to: localhost
